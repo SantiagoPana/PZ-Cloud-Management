@@ -1,0 +1,14 @@
+# Player data and secrets
+Saves/
+backups/
+*.zip
+*.7z
+*.token
+*.credentials.json
+.env
+*.log
+
+# Build outputs
+build/
+out/
+*.class
