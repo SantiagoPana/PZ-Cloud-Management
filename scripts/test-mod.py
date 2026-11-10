@@ -15,10 +15,10 @@ fallback = dict(re.findall(r'(\w+) = "([^"]*)"', lua.split('local fallback = {',
 # Keep the public workshop metadata and game mod synchronized.
 info = (mod / 'mod.info').read_text(encoding='utf-8').splitlines()
 assert 'id=KNManagement' in info
-assert 'modversion=2.3.4' in info
+assert 'modversion=2.3.5' in info
 workshop_metadata = (repo / 'workshop/workshop.txt').read_text(encoding='utf-8')
 assert workshop_metadata.startswith('version=1\nid=')
-assert 'releases/tag/v2.3.4' in workshop_metadata
+assert 'releases/tag/v2.3.5' in workshop_metadata
 assert 'math.floor((screenWidth - PZCloud.button.width) / 2)' in lua
 translations = {}
 for language in ('EN', 'ES', 'AR'):

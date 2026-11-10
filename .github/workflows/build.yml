@@ -24,8 +24,8 @@ jobs:
         run: python3 scripts/package-workshop.py
       - uses: actions/upload-artifact@v4
         with:
-          name: KnoxNet-Workshop-2.3.4
-          path: build/workshop/KnoxNet-Workshop-2.3.4.zip
+          name: KnoxNet-Workshop-2.3.5
+          path: build/workshop/KnoxNet-Workshop-2.3.5.zip
           if-no-files-found: error
           retention-days: 30
   test:
@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: KnoxNet-2.3.4-UI
+          name: KnoxNet-2.3.5-UI
           path: |
             build/ui-smoke.png
             build/ui-v2-recover.png
@@ -103,7 +103,7 @@ jobs:
         run: |
           $status = Get-Content build/portable/KnoxNet/GOOGLE_AUTH_STATUS.json -Raw | ConvertFrom-Json
           $edition = if ($status.googleClientBundled) { 'Windows-Google' } else { 'Preview-local-only' }
-          "name=KnoxNet-2.3.4-$edition" >> $env:GITHUB_OUTPUT
+          "name=KnoxNet-2.3.5-$edition" >> $env:GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.edition.outputs.name }}

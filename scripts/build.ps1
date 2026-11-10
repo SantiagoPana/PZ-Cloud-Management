@@ -38,7 +38,7 @@ if ($Package) {
     New-Item -ItemType Directory -Force -Path $taskInput | Out-Null
     Copy-Item -LiteralPath $taskJar -Destination $taskInput -Force
     if (Test-Path $taskPortable) { Remove-Item -LiteralPath $taskPortable -Recurse -Force }
-    & jpackage --type app-image --name KnoxNet --input $taskInput --main-jar PZCloudManagement.jar --main-class pzcloud.PzCloudApp --dest $taskPortable --app-version 2.3.4 --vendor 'Santiago Martin' --description 'PZ Cloud Management' --add-modules 'java.base,java.desktop,java.net.http,jdk.httpserver,jdk.crypto.ec,java.logging' --jlink-options '--strip-debug --strip-native-commands --no-header-files --no-man-pages --compress=zip-6' --java-options '-Xms8m' --java-options '-Xmx768m' --java-options '-XX:+UseSerialGC' --java-options '-XX:MinHeapFreeRatio=10' --java-options '-XX:MaxHeapFreeRatio=20'
+    & jpackage --type app-image --name KnoxNet --input $taskInput --main-jar PZCloudManagement.jar --main-class pzcloud.PzCloudApp --dest $taskPortable --app-version 2.3.5 --vendor 'Santiago Martin' --description 'PZ Cloud Management' --add-modules 'java.base,java.desktop,java.net.http,jdk.httpserver,jdk.crypto.ec,java.logging' --jlink-options '--strip-debug --strip-native-commands --no-header-files --no-man-pages --compress=zip-6' --java-options '-Xms8m' --java-options '-Xmx768m' --java-options '-XX:+UseSerialGC' --java-options '-XX:MinHeapFreeRatio=10' --java-options '-XX:MaxHeapFreeRatio=20'
     if ($LASTEXITCODE -ne 0) { throw 'Fallo el paquete portable.' }
     $taskApp = Join-Path $taskPortable 'KnoxNet'
     Copy-Item -LiteralPath (Join-Path $taskRepo 'docs/CLIENT_README.md') -Destination (Join-Path $taskApp 'README.md')

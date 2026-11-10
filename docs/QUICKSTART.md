@@ -1,6 +1,10 @@
-# Usar Knox Net 2.3.4
+# Usar Knox Net 2.3.5
 
 **PZ Cloud Management**
+
+## Idioma de Knox Net
+
+El idioma inicial se detecta desde Windows: español cuando Windows usa español, e inglés cuando usa inglés u otro idioma no disponible. El botón **Idioma / Language** aparece arriba, junto a Configuración. También encontrás **Auto / Automático**, **Español** y **English** en la parte superior de Configuración. El cambio se guarda y se aplica sin reiniciar; no afecta las copias ni la cuenta Google.
 
 ## Primera vez
 

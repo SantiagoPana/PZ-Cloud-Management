@@ -1,8 +1,9 @@
 # Knox Net · PZ Cloud Management
 
 - Nombre visible: **Knox Net**.
+- App 2.3.5: selector de idioma Auto / Español / English; el idioma automático usa el idioma del sistema.
 - Descripción: **PZ Cloud Management**.
-- Versión preparada: **2.3.4**, aplicación e integración del juego.
+- Versión preparada: **2.3.5**, aplicación e integración del juego.
 - Portable de Windows: `KnoxNet.exe`, dentro de la carpeta `KnoxNet`.
 - Mod: nombre `Knox Net`, ID `KNManagement`, autor `47`.
 - Workshop: `Knox Net - PZ Cloud Management [B42]`.
@@ -19,6 +20,6 @@ El ID `KNManagement` conserva la elección del autor en `mod.info`. Si antes usa
 
 ## Distribución preparada
 
-GitHub Actions genera `KnoxNet-2.3.4-Windows-Google` cuando el cliente de Google del autor está incluido, y `KnoxNet-Workshop-2.3.4` para el mod. Las ediciones sin conexión incluida se identifican como `Preview-local-only`.
+GitHub Actions genera `KnoxNet-2.3.5-Windows-Google` cuando el cliente de Google del autor está incluido, y `KnoxNet-Workshop-2.3.5` para el mod. Las ediciones sin conexión incluida se identifican como `Preview-local-only`.
 
-La release `v2.3.4` distribuye el ejecutable nuevo y un ZIP de Workshop listo para cargar desde el juego. Las releases `v2.3.1` y `v2.3.2` no se modifican. Publicar el ZIP en GitHub no publica automáticamente el artículo en Steam Workshop: ese paso requiere la sesión del autor en Steam.
+La release `v2.3.5` distribuye el ejecutable nuevo y un ZIP de Workshop listo para cargar desde el juego. Las releases `v2.3.1` y `v2.3.2` no se modifican. Publicar el ZIP en GitHub no publica automáticamente el artículo en Steam Workshop: ese paso requiere la sesión del autor en Steam.

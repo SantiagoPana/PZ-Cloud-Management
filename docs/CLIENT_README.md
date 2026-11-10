@@ -1,6 +1,8 @@
-# Knox Net 2.3.4
+# Knox Net 2.3.5
 
 **PZ Cloud Management**
+
+Nuevo en la 2.3.5: **Idioma / Language** en la barra superior y selector al principio de Configuración. **Auto / Automático** detecta el idioma del sistema; **Español** y **English** fuerzan la elección y se recuerdan al reiniciar.
 
 Tus partidas, a salvo. Abrí **KnoxNet.exe**, iniciá sesión con Google y autorizá el acceso a tus respaldos. Java viene incluido.
 
@@ -21,4 +23,4 @@ Para recuperar un mundo usá una versión de Zomboid y mods compatibles. La app 
 
 Soporte: https://github.com/SantiagoPana/PZ-Cloud-Management/issues
 
-El título de la ventana identifica la edición: **2.3.4 · Google incluido**. Si ya estaba abierta otra edición, usá en ella Configuración → Más opciones → Cerrar el gestor por completo, y después abrí esta versión.
+El título de la ventana identifica la edición: **2.3.5 · Google incluido**. Si ya estaba abierta otra edición, usá en ella Configuración → Más opciones → Cerrar el gestor por completo, y después abrí esta versión.
