@@ -15,6 +15,8 @@ public final class Config {
         data.putIfAbsent("cloudMode",publisherReady?"drive":"none");
         data.putIfAbsent("syncFolder","");
         data.putIfAbsent("setupComplete",false);
+        // Automatic UI language follows the OS; a manual override is stored with other preferences.
+        data.putIfAbsent("language","auto");
         data.putIfAbsent("zomboid", Path.of(System.getProperty("user.home"),"Zomboid").toString());
         data.putIfAbsent("deviceId",UUID.randomUUID().toString());
         data.putIfAbsent("deviceName",System.getenv().getOrDefault("COMPUTERNAME",System.getenv().getOrDefault("HOSTNAME","Mi PC")));
