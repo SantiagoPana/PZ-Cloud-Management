@@ -39,7 +39,7 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
     private List<SaveManager.Local> copies=List.of();
     private List<Config.World> allWorlds=List.of();
     private volatile String selectedKey="";
-    private boolean busy,updating,started;
+    private boolean busy,updating,started,exitAfterCurrent;
     private TrayIcon tray;
     @FunctionalInterface interface Task<T> { T run() throws Exception; }
     private record Recovery(SaveManager.Local local,CloudProvider.Remote remote) {
@@ -260,6 +260,7 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
             SwingUtilities.invokeLater(()-> { busy=false; buttons.forEach(b->b.setEnabled(true)); automatic.setEnabled(worlds.getSelectedValue()!=null); source.setEnabled(true); progress.setIndeterminate(false); progress.setVisible(false); updateConnection();
                 if(failure!=null) { log(I18n.t("No se completó: ")+failure.getMessage()); JOptionPane.showMessageDialog(this,failure.getMessage(),I18n.t("No se completó la operación"),JOptionPane.ERROR_MESSAGE); }
                 else { status.setText(I18n.t("Listo")); success.accept(value); } updateActions();
+                if(exitAfterCurrent) { exitAfterCurrent=false; exit(); }
             });
         });
     }
@@ -281,9 +282,14 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
     }
     boolean trayAvailable() { return tray!=null; } // For isolated native UI tests.
     private void closeWindow() {
-        if(busy) { message(I18n.t("Esperá a que termine la operación antes de cerrar.")); return; }
-        if(manager.config.automaticExits()||(manager.hasPending()&&manager.canSync())) minimizeToTray();
-        else exit();
+        // The window's X always means EXIT. Only the explicit minimize button uses the tray.
+        // Never interrupt an active archive write/restore: finish that operation, then quit.
+        if(busy) {
+            exitAfterCurrent=true;
+            status.setText(I18n.t("Se cerrará al terminar la operación actual."));
+            return;
+        }
+        exit();
     }
     private void exit() { if(busy) { message(I18n.t("Esperá a que termine la operación antes de salir.")); return; } close(); System.exit(0); }
     public void close() { try { service.close(); } catch(IOException ignored) {} worker.shutdownNow(); if(tray!=null) SystemTray.getSystemTray().remove(tray); dispose(); }
