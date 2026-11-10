@@ -90,7 +90,7 @@ jobs:
         shell: pwsh
         env:
           PZCLOUD_GOOGLE_CLIENT_JSON: ${{ secrets.PZCLOUD_GOOGLE_CLIENT_JSON }}
-        run: ./scripts/build.ps1 -Package
+        run: ./scripts/build.ps1 -Package -RequireGoogleLogin
       - name: Launch packaged Windows runtime with isolated Google fixture
         shell: pwsh
         run: ./scripts/test-native-windows.ps1
