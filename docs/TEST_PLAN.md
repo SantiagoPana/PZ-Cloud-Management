@@ -4,7 +4,7 @@
 
 `bash scripts/test.sh` o `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`.
 
-50 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
+78 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
 
 - JSON, Unicode, enteros grandes, nombres portables, traversal y rutas duplicadas.
 - Binarios, directorios vacíos, manifiesto, SHA-256, CRC y contenido corrupto con CRC recompuesto.
@@ -36,3 +36,9 @@ La 2.0 agrega pruebas de migración de índices, consulta del historial sin abri
 6. Intentar respaldo/restauración con el juego abierto: ambos deben rechazarse. Cerrar PZ y comprobar la cola automática tras la espera.
 
 Estas pruebas reales todavía no se han ejecutado en este entorno. El simulador verifica el protocolo del cliente; no sustituye una cuenta Google real ni la carga del mundo dentro de PZ.
+
+## Inicio de sesión de la 2.1
+
+Las pruebas incluyen configuración del autor sin importación por usuario, conservación del cliente de una sesión, cancelación y limpieza del callback, intento único, vencimiento/reintento, commit final y recuperación tras una sesión ilegible. El publicador verifica que la identidad de app no incorpore tokens del usuario y que una compilación sin cliente no afirme estar lista.
+
+`pzcloud.SignInUiSmoke` abre la ventana nativa y un simulador OAuth local, comprueba retorno automático y sesión recordada, reutilización sin otro login, cancelación, falta de configuración y ausencia de campos para usuario/contraseña dentro de la app. Genera `build/ui-google-sign-in.png` y `build/ui-google-not-configured.png`. Estas pruebas no registran una app ni conectan una cuenta real.

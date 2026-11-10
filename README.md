@@ -1,18 +1,24 @@
-# PZ Cloud 2.0
+# PZ Cloud 2.1
 
 **Guardá tu partida. Recuperala en otra PC.** Aplicación de escritorio en español para partidas de un jugador de Project Zomboid B42. Autor: Santiago Martin.
 
+## Inicio de sesión sencillo
+
+La 2.1 agrega la ventana **Iniciar sesión con Google**: abre el selector oficial de cuenta en el navegador, recibe la autorización automáticamente y recuerda la sesión. Permite cancelar, reabrir el navegador y elegir otra cuenta. El recorrido normal ya no pide archivos JSON.
+
+**Para activar Google en una edición distribuida, el autor debe registrar una aplicación de escritorio y agregar su configuración a la compilación una sola vez.** Si no se proporciona, el programa lo indica y no intenta un login ficticio. La compilación genérica de CI no trae una identidad Google inventada. [Configuración única del autor](docs/AUTHOR_GOOGLE.md).
+
 ## Empezar
 
-Descargá `PZCloudManagement-2.0-Windows-x64` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
+Descargá `PZCloudManagement-2.1-Windows-x64` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
 
-1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o tu conexión **Google Drive directo**.
+1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o **Google Drive directo** si tu edición ya lo trae habilitado.
 2. Elegí la partida y pulsá **Guardar partida**. Activá **Guardar automáticamente al cerrar Zomboid** si querés protección automática.
 3. En otra PC, configurá la misma carpeta/cuenta y usá **Recuperar partida → En mi carpeta / nube**.
 
 El modo carpeta no necesita crear un proyecto de Google ni importar credenciales. Tu aplicación de sincronización debe terminar de subir los archivos antes de cambiar de PC. El gestor muestra **En tu carpeta**, no asegura una subida que depende de otra aplicación. [Guía sencilla](docs/QUICKSTART.md).
 
-## Qué cambió en la 2.0
+## Interfaz y consumo
 
 - Dos tareas principales: **Guardar partida** y **Recuperar partida**.
 - Configuración inicial guiada y preferencias sensatas; las herramientas técnicas quedan en Más opciones.
@@ -41,9 +47,9 @@ Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC
 
 ## Compatibilidad y estado
 
-**2.0.0-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
+**2.1.0-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
 
-66 pruebas automáticas con mundos ficticios y simulador HTTP local, más una prueba gráfica que hace clic en configurar, guardar y recuperar. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
+78 pruebas automáticas con mundos ficticios y simulador HTTP local, más pruebas gráficas de configurar/guardar/recuperar y de la ventana de inicio de sesión con un simulador local. Ninguna prueba automatizada conecta una cuenta real. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
 
 Solo un jugador; no servidores dedicados ni partidas multijugador alojadas. Usá las mismas builds y mods para cargar una copia en otra PC. Volver al menú no cierra el proceso: el respaldo automático espera a salir completamente de Zomboid.
 

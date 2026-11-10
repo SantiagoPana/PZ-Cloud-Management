@@ -1,41 +1,28 @@
-# Google Drive directo en la 2.0
+# Iniciar sesión con Google
 
-Para usar una carpeta que tu aplicación Drive/OneDrive ya sincroniza, elegila en Configuración; ese modo no necesita estos pasos.
+En una edición habilitada por el autor:
 
-Esta guía corresponde a la conexión directa con Google Drive. Necesita un cliente OAuth de escritorio de tu proyecto Google: no se incluyen credenciales ajenas ni un servidor central. El inicio de sesión y el consentimiento se hacen en el navegador del usuario.
+1. Pulsá **Iniciar sesión con Google** en la ventana principal.
+2. Se abre una ventanita de PZ Cloud y la página oficial de Google en tu navegador.
+3. Elegí tu cuenta y autorizá el acceso a tus respaldos.
+4. La ventanita se cierra al terminar y el gestor muestra **Google Drive conectado**. La sesión queda guardada en esta PC.
 
-## Configuración inicial (una vez por proyecto)
+No se escribe la contraseña dentro de PZ Cloud. Si cerraste el navegador antes de terminar, usá **Volver a abrir Google**. Si el navegador no abre, **Copiar enlace** permite continuar en otro navegador de esta misma PC. **Cancelar** detiene el intento; al cambiar de cuenta conserva la conexión anterior si no terminaste.
 
-1. Abrí [Google Cloud Console](https://console.cloud.google.com/) y creá o elegí un proyecto para PZ Cloud Management.
-2. Habilitá [Google Drive API](https://console.cloud.google.com/apis/library/drive.googleapis.com).
-3. En Google Auth Platform configurá el nombre de la aplicación y los datos de contacto. Para una cuenta personal, usá audiencia externa. Si está en modo de prueba, agregá tu cuenta como usuario de prueba.
-4. El único permiso que solicita el programa es `https://www.googleapis.com/auth/drive.appdata`. Si la consola pide configurar acceso a datos, agregá ese permiso.
-5. En **Clients / Clientes**, creá un cliente de tipo **Desktop app / Aplicación de escritorio**. Descargá el JSON.
-6. En el gestor: **Configuración → Conectar Google…**. La primera vez te pide el archivo de conexión JSON. Elegí tu cuenta en el navegador y autorizá el permiso.
-7. Al volver al gestor debe verse **Google Drive conectado**. Elegí Google Drive directo en Configuración, guardá una partida y buscala en Recuperar partida.
+Para usar la conexión guardada, elegí **Usar esta conexión**. **Elegir otra cuenta** vuelve a mostrar el selector de Google. En otra PC iniciá sesión con la misma cuenta; no copies la sesión cifrada entre equipos.
 
-Importá el mismo JSON y conectá la misma cuenta en la segunda PC. La identidad de aplicación/proyecto y la cuenta deben coincidir para acceder a los mismos respaldos.
+## Si la ventana dice que el autor debe habilitar Google
 
-## Dónde aparecen las partidas
+Esa edición todavía no contiene la identidad registrada de PZ Cloud. No es un problema de tu cuenta. El autor debe preparar un instalable configurado siguiendo [AUTHOR_GOOGLE.md](AUTHOR_GOOGLE.md); es un paso único de la aplicación, no algo que cada usuario deba configurar.
 
-Se guardan en `appDataFolder`, el espacio privado de la aplicación en tu cuenta. Las versiones se ven en la vista **Recuperar partida → En mi carpeta / nube** del gestor; no aparecen como una carpeta común en la web de Drive. Consumen almacenamiento de la cuenta. Revocar acceso o borrar los datos de la aplicación desde Google puede impedir el acceso o eliminar esos datos; conservá exportaciones locales de las copias que necesites aparte.
+Mientras tanto siguen funcionando los respaldos locales y el modo carpeta sincronizada. La aplicación no presenta una conexión como exitosa sin recibir y guardar los tokens de Google.
 
-## Sesión y errores habituales
+## Acceso y datos
 
-- **No configurado:** importá el JSON descargado de un cliente de escritorio, no una cuenta de servicio ni un cliente web.
-- **access_denied / usuario no autorizado:** agregá la cuenta a los usuarios de prueba del proyecto o revisá la audiencia y el consentimiento.
-- **API deshabilitada:** habilitá Google Drive API en el mismo proyecto del cliente.
-- **Sesión vencida/revocada:** volvé a conectar. Los respaldos pendientes permanecen en la PC. Los clientes externos en modo de prueba pueden tener refresh tokens con vencimiento de siete días.
-- **HTTP 403 / cuota:** revisá autorización y almacenamiento de la cuenta. La copia local y la cola no se marcan como sincronizadas.
-- **Sin navegador registrado:** el gestor muestra la dirección para abrirla manualmente. El callback usa una dirección loopback `127.0.0.1` con puerto aleatorio, no un código para pegar en el programa.
+Se solicita únicamente `drive.appdata`: los respaldos quedan en el espacio privado de esta aplicación en tu Drive. Se ven desde **Recuperar partida → En mi carpeta / nube**, no como una carpeta común de la web de Drive. El almacenamiento pertenece a tu cuenta.
 
-El JSON y la sesión se guardan solo en la carpeta de datos del gestor y están excluidos del repositorio. No pegues tokens ni el contenido de tus credenciales en issues.
+La sesión usa DPAPI CurrentUser en Windows y permisos 0600 en POSIX. Desconectar elimina la sesión local, no tus respaldos remotos. Si Google revoca o vence la sesión, podés entrar otra vez desde la misma ventana.
 
-## Referencias oficiales usadas
+La autorización usa navegador del sistema, PKCE S256, state aleatorio y retorno loopback temporal. No agrega un motor web residente al gestor. [Documentación oficial de Google para aplicaciones de escritorio](https://developers.google.com/identity/protocols/oauth2/native-app).
 
-- [OAuth 2.0 para aplicaciones de escritorio, PKCE y loopback](https://developers.google.com/identity/protocols/oauth2/native-app).
-- [Espacio privado appDataFolder](https://developers.google.com/workspace/drive/api/guides/appdata).
-- [Transferencias reanudables](https://developers.google.com/workspace/drive/api/guides/manage-uploads).
-- [IDs preasignados](https://developers.google.com/workspace/drive/api/reference/rest/v3/files/generateIds).
-
-El cliente HTTP se verifica con un simulador local; conectar una cuenta real y probar el recorrido entre PCs es la validación externa pendiente.
+La ventana y el protocolo están probados con un simulador HTTP local. Registrar la aplicación y probar una cuenta real siguen siendo pasos externos necesarios.

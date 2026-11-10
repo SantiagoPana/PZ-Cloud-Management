@@ -55,7 +55,7 @@ public final class SaveManager {
     }
     public synchronized boolean hasPending() { return !pendingIds.isEmpty(); }
     public synchronized int pendingCount() { return pendingIds.size(); }
-    public boolean canSync() { return config.get("cloudMode").equals("folder")&&!config.get("syncFolder").isBlank()||config.get("cloudMode").equals("drive")&&auth.connected(); }
+    public boolean canSync() { return !auth.isConnecting()&&(config.get("cloudMode").equals("folder")&&!config.get("syncFolder").isBlank()||config.get("cloudMode").equals("drive")&&auth.connected()); }
     public synchronized List<Local> history(Config.World world) throws IOException {
         List<Local> out=new ArrayList<>(); pendingIds.clear();
         try(var files=Files.newDirectoryStream(config.archives(),"*.zip")) {

@@ -40,7 +40,7 @@ public final class SelfTest {
                 Process probe=new ProcessBuilder(java,"-Dtest.pz.marker=zombie.GameWindow","-cp",System.getProperty("java.class.path"),SelfTest.class.getName(),"process-probe").start();
                 try { eq(new BufferedReader(new InputStreamReader(probe.getInputStream())).readLine(),"READY"); ok(new GameGuard().running()); } finally { probe.getOutputStream().close(); if(!probe.waitFor(5,TimeUnit.SECONDS)) probe.destroyForcibly(); }
             });
-            jsonTests(); archiveTests(); managerTests(); v2Tests(); cloudTests(); authTests();
+            jsonTests(); archiveTests(); managerTests(); v2Tests(); cloudTests(); authTests(); signInTests();
             System.out.println("OK: "+passed+" integration tests; no real game saves or Google account accessed.");
         } finally { FilesEx.deleteTree(root); }
     }
@@ -306,6 +306,61 @@ public final class SelfTest {
                 auth.disconnect(); ok(!Files.exists(home.resolve("google-session.token"))); fails(()->auth.connect(uri->{ try { var q=GoogleAuth.query(uri.getRawQuery()); HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(q.get("redirect_uri")+"?state="+q.get("state")+"&error=access_denied")).GET().build(),HttpResponse.BodyHandlers.ofString()); } catch(Exception ex) { throw new RuntimeException(ex); } })); ok(!auth.connected());
             });
         }
+    }
+    static Map<String,Object> desktopClient(String id) { return Map.of("installed",Map.of("client_id",id+".apps.googleusercontent.com","client_secret","public-desktop-test")); }
+    static void approveLogin(java.net.URI uri,MockDrive mock) {
+        try {
+            var q=GoogleAuth.query(uri.getRawQuery()); mock.challenge=q.get("code_challenge");
+            ok(q.get("prompt").contains("select_account"));
+            var response=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(q.get("redirect_uri")+"?state="+q.get("state")+"&code=test-code")).GET().build(),HttpResponse.BodyHandlers.ofString()); eq(response.statusCode(),200);
+        } catch(Exception ex) { throw new RuntimeException(ex); }
+    }
+    static void signInTests() throws Exception {
+        try(MockDrive mock=new MockDrive()) {
+            Path home=dir("signin/publisher-client"); GoogleAuth auth=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher"));
+            test("Publisher-supplied client signs in without importing an end-user JSON",()-> { ok(auth.configured()); auth.connect(uri->approveLogin(uri,mock)); ok(auth.connected()); eq(Json.str(Json.object(FilesEx.readJson(home.resolve("google-client.json")).get("installed")),"client_id"),"publisher.apps.googleusercontent.com"); });
+            test("Session pins its original client across an app configuration change",()-> { GoogleAuth changed=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("different-publisher")); eq(changed.accessToken(true),"access-refreshed"); });
+            test("Unconfigured distribution never opens a fake Google login",()-> {
+                GoogleAuth missing=new GoogleAuth(dir("signin/missing"),mock.base.resolve("token"),java.time.Duration.ofSeconds(1),Map::of); AtomicInteger opened=new AtomicInteger(); ok(!missing.configured()); ok(!missing.configurationProblem().isBlank()); fails(()->missing.connect(uri->opened.incrementAndGet())); eq(opened.get(),0); ok(!missing.isConnecting());
+            });
+            test("Cancelling browser wait stops callback and saves no account token",()-> {
+                Path empty=dir("signin/cancel"); GoogleAuth waiting=new GoogleAuth(empty,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher")); CountDownLatch shown=new CountDownLatch(1); AtomicReference<URI> page=new AtomicReference<>(); ExecutorService worker=Executors.newSingleThreadExecutor();
+                try {
+                    Future<Boolean> result=worker.submit(()-> { try { waiting.connect(uri->{ page.set(uri); shown.countDown(); }); return true; } catch(IOException ex) { return false; } });
+                    ok(shown.await(2,TimeUnit.SECONDS)); ok(waiting.cancelConnection()); ok(!result.get(2,TimeUnit.SECONDS)); ok(!waiting.connected()); ok(!Files.exists(empty.resolve("google-session.token"))); ok(!waiting.isConnecting());
+                    String callback=GoogleAuth.query(page.get().getRawQuery()).get("redirect_uri"); fails(()->HttpClient.newBuilder().connectTimeout(java.time.Duration.ofMillis(200)).build().send(HttpRequest.newBuilder(URI.create(callback)).timeout(java.time.Duration.ofMillis(300)).GET().build(),HttpResponse.BodyHandlers.ofString()));
+                } finally { worker.shutdownNow(); }
+            });
+            test("Cancelling an account change retains the previous working session",()-> {
+                CountDownLatch shown=new CountDownLatch(1); ExecutorService worker=Executors.newSingleThreadExecutor(); String previous=auth.connectionId();
+                try { Future<Boolean> result=worker.submit(()-> { try { auth.connect(uri->shown.countDown()); return true; } catch(IOException ex) { return false; } }); ok(shown.await(2,TimeUnit.SECONDS)); ok(auth.cancelConnection()); ok(!result.get(2,TimeUnit.SECONDS)); ok(auth.connected()); eq(auth.connectionId(),previous); }
+                finally { worker.shutdownNow(); }
+            });
+            test("Only one Google authorization attempt can run at a time",()-> {
+                GoogleAuth pending=new GoogleAuth(dir("signin/concurrent"),mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher")); CountDownLatch shown=new CountDownLatch(1); ExecutorService worker=Executors.newSingleThreadExecutor();
+                try { Future<?> first=worker.submit(()-> { try { pending.connect(uri->shown.countDown()); } catch(IOException ignored) {} }); ok(shown.await(2,TimeUnit.SECONDS)); fails(()->pending.connect(uri->{})); ok(pending.isConnecting()); pending.cancelConnection(); first.get(2,TimeUnit.SECONDS); }
+                finally { worker.shutdownNow(); }
+            });
+            test("Expired sign-in frees its local listener and can be retried",()-> {
+                GoogleAuth expiring=new GoogleAuth(dir("signin/timeout"),mock.base.resolve("token"),java.time.Duration.ofMillis(80),()->desktopClient("publisher")); fails(()->expiring.connect(uri->{})); ok(!expiring.isConnecting()); expiring.connect(uri->approveLogin(uri,mock)); ok(expiring.connected());
+            });
+            test("Final session commit cannot be falsely reported as cancelled",()-> {
+                GoogleAuth committing=new GoogleAuth(dir("signin/commit"),mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher")); AtomicBoolean seen=new AtomicBoolean(); committing.connect(uri->approveLogin(uri,mock),phase->{ if(phase.equals("committing")) { seen.set(true); ok(!committing.cancelConnection()); } }); ok(seen.get()); ok(committing.connected());
+            });
+            test("An unreadable old sign-in token does not prevent local app startup",()-> {
+                Path broken=dir("signin/broken"); Files.writeString(broken.resolve("google-session.token"),"not-a-session"); GoogleAuth recovered=new GoogleAuth(broken,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher")); ok(!recovered.connected()); ok(!recovered.sessionProblem().isBlank()); ok(recovered.configured()); ok(Files.exists(broken.resolve("google-session.token")));
+            });
+        }
+        test("Publisher build embeds only application identity and reports configuration honestly",()-> {
+            Path resources=dir("signin/build/resources"),report=root.resolve("signin/build/report.json"); Map<String,Object> doc=new LinkedHashMap<>(desktopClient("publisher")); doc.put("refresh_token","MUST_NOT_BE_PUBLISHED"); doc.put("access_token","PRIVATE_USER_TOKEN");
+            ok(PublisherConfig.prepareDocument(resources,report,doc,true)); String text=Files.readString(resources.resolve("auth/google-client.json")); ok(!text.contains("MUST_NOT_BE_PUBLISHED")); ok(!text.contains("PRIVATE_USER_TOKEN")); ok(!Files.readString(report).contains("publisher.apps")); eq(Json.str(FilesEx.readJson(report),"googleClientBundled"),"true");
+        });
+        test("An unconfigured build clears stale Google identity and cannot claim ready",()-> {
+            Path resources=dir("signin/build/resources"),report=root.resolve("signin/build/report.json"); ok(!PublisherConfig.prepareDocument(resources,report,Map.of(),false)); ok(!Files.exists(resources.resolve("auth/google-client.json"))); eq(Json.str(FilesEx.readJson(report),"googleClientBundled"),"false"); fails(()->PublisherConfig.prepareDocument(resources,report,Map.of(),true));
+        });
+        test("Publisher build rejects web clients and example placeholders",()-> {
+            Path resources=dir("signin/invalid/resources"),report=root.resolve("signin/invalid/report.json"); fails(()->PublisherConfig.prepareDocument(resources,report,Map.of("web",Map.of("client_id","web.apps.googleusercontent.com")),true)); fails(()->PublisherConfig.prepareDocument(resources,report,Map.of("installed",Map.of("client_id","PLACEHOLDER")),true));
+        });
     }
     static final class MockDrive implements AutoCloseable {
         final HttpServer server; final URI base; final Map<String,Map<String,Object>> files=new LinkedHashMap<>(), drafts=new LinkedHashMap<>();

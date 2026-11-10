@@ -10,107 +10,157 @@ import java.security.*;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 import java.util.function.Consumer;
 
-/** OAuth desktop Authorization Code + PKCE S256, random state and loopback callback. */
+/** System-browser OAuth desktop flow; PKCE/state/loopback, cancellation, publisher configuration. */
 public final class GoogleAuth {
     static final String SCOPE="https://www.googleapis.com/auth/drive.appdata";
+    @FunctionalInterface interface ClientSource { Map<String,Object> load() throws IOException; }
     private final Path clientFile;
     private final TokenVault vault;
-    private HttpClient http;
-    synchronized HttpClient http() {
-        if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build();
-        return http;
-    }
-    private Map<String,Object> token;
     private final URI tokenEndpoint;
+    private final Duration loginTimeout;
+    private final ClientSource defaults;
+    private final AtomicReference<Attempt> connecting=new AtomicReference<>();
+    private Map<String,Object> token;
+    private HttpClient http;
+    private String sessionProblem="";
+    private static final class Attempt {
+        final AtomicReference<CompletableFuture<?>> exchange=new AtomicReference<>();
+        final CompletableFuture<String> code=new CompletableFuture<>();
+        // 0 waiting/exchanging, 1 cancelled, 2 committing, 3 complete.
+        final AtomicInteger phase=new AtomicInteger();
+    }
     public GoogleAuth(Path home) throws IOException { this(home,URI.create("https://oauth2.googleapis.com/token")); }
-    GoogleAuth(Path home,URI endpoint) throws IOException { clientFile=home.resolve("google-client.json"); vault=new TokenVault(home.resolve("google-session.token")); token=vault.read(); tokenEndpoint=endpoint; }
+    GoogleAuth(Path home,URI endpoint) throws IOException { this(home,endpoint,Duration.ofMinutes(5),GoogleClientDefaults::load); }
+    GoogleAuth(Path home,URI endpoint,Duration timeout,ClientSource defaults) throws IOException {
+        clientFile=home.resolve("google-client.json"); vault=new TokenVault(home.resolve("google-session.token"));
+        tokenEndpoint=endpoint; loginTimeout=timeout; this.defaults=defaults;
+        try { token=vault.read(); } catch(IOException ex) { token=new LinkedHashMap<>(); sessionProblem="La sesión anterior necesita volver a conectarse."; }
+    }
+    synchronized HttpClient http() { if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build(); return http; }
     public synchronized String connectionId() { return HexFormat.of().formatHex(FilesEx.digest("SHA-256").digest((Json.str(token,"client_id")+"|"+Json.str(token,"refresh_token")).getBytes(StandardCharsets.UTF_8))); }
     public synchronized boolean connected() { return !Json.str(token,"refresh_token").isBlank(); }
-    public boolean configured() { return Files.exists(clientFile); }
-    private Map<String,Object> client() throws IOException {
-        if(!configured()) throw new IOException("Importá primero el JSON OAuth de tipo Escritorio. Ver docs/GOOGLE_DRIVE.md.");
-        return validateClient(FilesEx.readJson(clientFile));
+    public boolean isConnecting() { return connecting.get()!=null; }
+    public boolean configured() { try { client(); return true; } catch(IOException ex) { return false; } }
+    public String sessionProblem() { return sessionProblem; }
+    public String configurationProblem() {
+        try { client(); return ""; }
+        catch(IOException ex) { return "El autor todavía debe habilitar el ingreso con Google en esta edición. Tus copias locales siguen disponibles."; }
     }
-    private Map<String,Object> validateClient(Map<String,Object> json) throws IOException {
-        Map<String,Object> c=Json.object(json.get("installed"));
-        if(!Json.str(c,"client_id").endsWith(".apps.googleusercontent.com")) throw new IOException("Se necesita un cliente OAuth de tipo Aplicación de escritorio.");
-        return c;
+    private Map<String,Object> clientDocument() throws IOException {
+        Map<String,Object> document=Files.exists(clientFile)?GoogleClientDefaults.read(clientFile):defaults.load();
+        validateClient(document); return document;
+    }
+    private Map<String,Object> client() throws IOException { return validateClient(clientDocument()); }
+    private Map<String,Object> validateClient(Map<String,Object> document) throws IOException {
+        if(!document.containsKey("installed")) throw new IOException("Esta edición todavía no incluye la conexión de Google del autor.");
+        Map<String,Object> client=Json.object(document.get("installed"));
+        String id=Json.str(client,"client_id");
+        if(id.isBlank()||id.length()>256||!id.endsWith(".apps.googleusercontent.com")) throw new IOException("La conexión de Google de la app no es válida.");
+        return client;
     }
     public synchronized void importClient(Path input) throws IOException {
-        Map<String,Object> doc=FilesEx.readJson(input); Map<String,Object> c=validateClient(doc);
-        if(connected()&&!Json.str(token,"client_id").equals(Json.str(c,"client_id"))) throw new IOException("Desconectá la cuenta antes de cambiar el cliente OAuth.");
-        FilesEx.json(clientFile,doc);
+        if(isConnecting()) throw new IOException("Terminá o cancelá la conexión en curso antes de cambiar la configuración.");
+        var document=GoogleClientDefaults.read(input); var client=validateClient(document);
+        if(connected()&&!Json.str(token,"client_id").equals(Json.str(client,"client_id"))) throw new IOException("Desconectá la cuenta antes de cambiar el cliente OAuth.");
+        FilesEx.json(clientFile,document);
     }
-    public void connect(Consumer<URI> openBrowser) throws IOException {
-        Map<String,Object> c=client(); String verifier=random(64),state=random(32);
-        String challenge=Base64.getUrlEncoder().withoutPadding().encodeToString(FilesEx.digest("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII)));
-        CompletableFuture<String> result=new CompletableFuture<>();
-        HttpServer callback=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
-        String redirect="http://127.0.0.1:"+callback.getAddress().getPort()+"/callback";
-        callback.createContext("/callback",exchange -> {
-            int status=400; String message="Solicitud inválida. Volvé a PZ Cloud Management.";
-            try {
-                Map<String,String> params=query(exchange.getRequestURI().getRawQuery());
-                if(exchange.getRequestMethod().equals("GET") && exchange.getRequestURI().getPath().equals("/callback") && MessageDigest.isEqual(state.getBytes(StandardCharsets.UTF_8),params.getOrDefault("state","").getBytes(StandardCharsets.UTF_8))) {
-                    if(params.containsKey("error")) { result.completeExceptionally(new IOException("Google: autorización cancelada o denegada.")); message="Autorización cancelada. Podés cerrar esta pestaña."; }
-                    else if(params.containsKey("code")) { result.complete(params.get("code")); status=200; message="Autorización recibida. Podés cerrar esta pestaña y volver a PZ Cloud Management."; }
-                }
-                byte[] body=message.getBytes(StandardCharsets.UTF_8);
-                exchange.getResponseHeaders().set("Content-Type","text/plain; charset=utf-8");
-                exchange.getResponseHeaders().set("Cache-Control","no-store");
-                exchange.sendResponseHeaders(status,body.length); exchange.getResponseBody().write(body);
-            } finally { exchange.close(); }
-        });
-        callback.start();
+    /** Returns false only after the session has reached its final, non-cancellable commit. */
+    public boolean cancelConnection() {
+        Attempt attempt=connecting.get(); if(attempt==null) return false;
+        if(!attempt.phase.compareAndSet(0,1)) return attempt.phase.get()==1;
+        attempt.code.completeExceptionally(new IOException("Inicio de sesión cancelado."));
+        CompletableFuture<?> request=attempt.exchange.getAndSet(null); if(request!=null) request.cancel(true); return true;
+    }
+    public void connect(Consumer<URI> browser) throws IOException { connect(browser,phase->{}); }
+    public void connect(Consumer<URI> browser,Consumer<String> status) throws IOException {
+        if(Thread.currentThread().isInterrupted()) throw new IOException("Inicio de sesión cancelado.");
+        Attempt attempt=new Attempt();
+        if(!connecting.compareAndSet(null,attempt)) throw new IOException("Ya hay un inicio de sesión en curso.");
+        HttpServer callback=null;
         try {
-            String params=form(Map.of("client_id",Json.str(c,"client_id"),"redirect_uri",redirect,"response_type","code","scope",SCOPE,"code_challenge",challenge,"code_challenge_method","S256","state",state,"access_type","offline","prompt","consent"));
-            openBrowser.accept(URI.create("https://accounts.google.com/o/oauth2/v2/auth?"+params));
-            String code=result.get(180,TimeUnit.SECONDS);
-            Map<String,String> body=new LinkedHashMap<>(); body.put("client_id",Json.str(c,"client_id")); body.put("client_secret",Json.str(c,"client_secret"));
-            body.put("redirect_uri",redirect); body.put("code",code); body.put("code_verifier",verifier); body.put("grant_type","authorization_code");
-            Map<String,Object> response=tokenRequest(body);
-            synchronized(this) {
-                if(Json.str(response,"refresh_token").isBlank()) throw new IOException("Google no entregó una sesión renovable. Reconectá autorizando el acceso.");
-                saveToken(response,Json.str(c,"client_id"));
-            }
-        } catch(TimeoutException e) { throw new IOException("La conexión con Google venció. Intentá nuevamente."); }
-        catch(ExecutionException e) { throw new IOException(e.getCause().getMessage()); }
-        catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Conexión cancelada.",e); }
-        finally { callback.stop(0); }
+            Map<String,Object> document=clientDocument(),client=validateClient(document);
+            // Pin the client used by this session across updates of the distributed application.
+            if(!Files.exists(clientFile)) FilesEx.json(clientFile,document);
+            String verifier=random(64),state=random(32);
+            String challenge=Base64.getUrlEncoder().withoutPadding().encodeToString(FilesEx.digest("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII)));
+            callback=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
+            String redirect="http://127.0.0.1:"+callback.getAddress().getPort()+"/callback";
+            callback.createContext("/callback",exchange->{
+                int code=400; String message="Solicitud inválida. Volvé a PZ Cloud.",acceptedCode=null; IOException denial=null;
+                try {
+                    Map<String,String> params;
+                    try { params=query(exchange.getRequestURI().getRawQuery()); } catch(IllegalArgumentException ex) { params=Map.of(); }
+                    if(exchange.getRequestMethod().equals("GET")&&exchange.getRequestURI().getPath().equals("/callback")&&MessageDigest.isEqual(state.getBytes(StandardCharsets.UTF_8),params.getOrDefault("state","").getBytes(StandardCharsets.UTF_8))) {
+                        if(attempt.phase.get()!=0) message="Esta conexión se canceló. Volvé a iniciar sesión desde PZ Cloud.";
+                        else if(params.containsKey("error")) { denial=new IOException("Google canceló o denegó la autorización."); message="Autorización cancelada. Podés volver a PZ Cloud."; }
+                        else if(!params.getOrDefault("code","").isBlank()) { acceptedCode=params.get("code"); code=200; message="La respuesta de Google llegó. Volvé a PZ Cloud para terminar; podés cerrar esta pestaña."; }
+                    }
+                    byte[] bytes=message.getBytes(StandardCharsets.UTF_8); exchange.getResponseHeaders().set("Content-Type","text/plain; charset=utf-8"); exchange.getResponseHeaders().set("Cache-Control","no-store"); exchange.sendResponseHeaders(code,bytes.length); exchange.getResponseBody().write(bytes);
+                } finally { exchange.close(); if(denial!=null) attempt.code.completeExceptionally(denial); else if(acceptedCode!=null) attempt.code.complete(acceptedCode); }
+            });
+            callback.start();
+            Map<String,String> params=new LinkedHashMap<>();
+            params.put("client_id",Json.str(client,"client_id")); params.put("redirect_uri",redirect); params.put("response_type","code"); params.put("scope",SCOPE); params.put("code_challenge",challenge); params.put("code_challenge_method","S256"); params.put("state",state); params.put("access_type","offline"); params.put("prompt","select_account consent");
+            if(attempt.phase.get()!=0||Thread.currentThread().isInterrupted()) throw new IOException("Inicio de sesión cancelado.");
+            status.accept("waiting"); browser.accept(URI.create("https://accounts.google.com/o/oauth2/v2/auth?"+form(params)));
+            String code=attempt.code.get(loginTimeout.toMillis(),TimeUnit.MILLISECONDS);
+            if(attempt.phase.get()!=0) throw new IOException("Inicio de sesión cancelado.");
+            status.accept("exchanging");
+            Map<String,String> body=new LinkedHashMap<>(); body.put("client_id",Json.str(client,"client_id")); body.put("client_secret",Json.str(client,"client_secret")); body.put("redirect_uri",redirect); body.put("code",code); body.put("code_verifier",verifier); body.put("grant_type","authorization_code");
+            Map<String,Object> response=tokenRequest(body,attempt);
+            if(Json.str(response,"refresh_token").isBlank()) throw new IOException("Google no entregó una sesión renovable. Volvé a iniciar sesión y autorizá el acceso.");
+            if(!attempt.phase.compareAndSet(0,2)) throw new IOException("Inicio de sesión cancelado.");
+            status.accept("committing"); saveToken(response,Json.str(client,"client_id")); attempt.phase.set(3);
+        } catch(TimeoutException ex) { throw new IOException("El inicio de sesión venció. Podés intentarlo otra vez."); }
+        catch(ExecutionException ex) { throw new IOException(ex.getCause().getMessage()); }
+        catch(InterruptedException ex) { Thread.currentThread().interrupt(); throw new IOException("Inicio de sesión cancelado."); }
+        finally { attempt.phase.compareAndSet(0,3); if(callback!=null) callback.stop(0); connecting.compareAndSet(attempt,null); }
     }
     public synchronized String accessToken(boolean forceRefresh) throws IOException {
         if(!connected()) throw new IOException("Google Drive no está conectado. Los respaldos quedan pendientes.");
         long expires=token.containsKey("expires_at")?Json.number(token,"expires_at"):0;
         if(!forceRefresh&&expires>Instant.now().getEpochSecond()+60&&!Json.str(token,"access_token").isBlank()) return Json.str(token,"access_token");
-        Map<String,Object> c=client();
-        if(!Json.str(c,"client_id").equals(Json.str(token,"client_id"))) throw new IOException("El cliente OAuth cambió. Reconectá Google Drive.");
-        Map<String,Object> refreshed=tokenRequest(Map.of("client_id",Json.str(c,"client_id"),"client_secret",Json.str(c,"client_secret"),"refresh_token",Json.str(token,"refresh_token"),"grant_type","refresh_token"));
-        refreshed.putIfAbsent("refresh_token",token.get("refresh_token")); saveToken(refreshed,Json.str(c,"client_id"));
-        return Json.str(token,"access_token");
+        Map<String,Object> client=client();
+        if(!Json.str(client,"client_id").equals(Json.str(token,"client_id"))) throw new IOException("La conexión de Google de la app cambió. Volvé a iniciar sesión.");
+        Map<String,Object> refreshed=tokenRequest(Map.of("client_id",Json.str(client,"client_id"),"client_secret",Json.str(client,"client_secret"),"refresh_token",Json.str(token,"refresh_token"),"grant_type","refresh_token"));
+        refreshed.putIfAbsent("refresh_token",token.get("refresh_token")); saveToken(refreshed,Json.str(client,"client_id")); return Json.str(token,"access_token");
     }
-    private void saveToken(Map<String,Object> response,String clientId) throws IOException {
-        if(Json.str(response,"access_token").isBlank()) throw new IOException("Respuesta de autorización incompleta.");
-        Map<String,Object> next=new LinkedHashMap<>(response); next.put("client_id",clientId); next.put("expires_at",Instant.now().getEpochSecond()+Json.number(response,"expires_in"));
-        vault.write(next); token=next;
+    private synchronized void saveToken(Map<String,Object> response,String clientId) throws IOException {
+        if(Json.str(response,"access_token").isBlank()) throw new IOException("Google devolvió una respuesta incompleta.");
+        Map<String,Object> next=new LinkedHashMap<>(response); next.put("client_id",clientId); next.put("expires_at",Instant.now().getEpochSecond()+Json.number(response,"expires_in")); vault.write(next); token=next; sessionProblem="";
     }
-    private Map<String,Object> tokenRequest(Map<String,String> body) throws IOException {
+    private Map<String,Object> tokenRequest(Map<String,String> body) throws IOException { return tokenRequest(body,null); }
+    private Map<String,Object> tokenRequest(Map<String,String> body,Attempt attempt) throws IOException {
         HttpRequest request=HttpRequest.newBuilder(tokenEndpoint).timeout(Duration.ofSeconds(30)).header("Content-Type","application/x-www-form-urlencoded").POST(HttpRequest.BodyPublishers.ofString(form(body))).build();
+        CompletableFuture<HttpResponse<byte[]>> pending=null;
         try {
-            HttpResponse<InputStream> res=http().send(request,HttpResponse.BodyHandlers.ofInputStream()); String text;
-            try(InputStream in=res.body()) { text=new String(in.readNBytes(1024*1024),StandardCharsets.UTF_8); }
-            if(res.statusCode()!=200) throw new IOException(res.statusCode()==400?"La sesión de Google venció o fue revocada. Volvé a conectar Drive.":"Google no pudo autorizar la sesión (HTTP "+res.statusCode()+").");
-            return Json.object(Json.parse(text));
-        } catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Conexión cancelada.",e); }
+            HttpResponse<byte[]> response;
+            if(attempt==null) response=http().send(request,HttpResponse.BodyHandlers.ofByteArray());
+            else {
+                pending=http().sendAsync(request,HttpResponse.BodyHandlers.ofByteArray()); attempt.exchange.set(pending);
+                if(attempt.phase.get()!=0) pending.cancel(true);
+                response=pending.get();
+            }
+            if(response.body().length>1024*1024) throw new IOException("Google devolvió una respuesta de conexión demasiado grande.");
+            if(response.statusCode()!=200) throw new IOException(response.statusCode()==400?"Google necesita que vuelvas a iniciar sesión.":"No se pudo conectar con Google (HTTP "+response.statusCode()+"). Intentá más tarde.");
+            return Json.object(Json.parse(new String(response.body(),StandardCharsets.UTF_8)));
+        } catch(CancellationException ex) { throw new IOException("Inicio de sesión cancelado."); }
+        catch(ExecutionException ex) { throw new IOException("No se pudo conectar con Google. Revisá tu conexión a Internet.",ex.getCause()); }
+        catch(InterruptedException ex) { if(pending!=null) pending.cancel(true); Thread.currentThread().interrupt(); throw new IOException("Inicio de sesión cancelado."); }
+        finally { if(attempt!=null&&pending!=null) attempt.exchange.compareAndSet(pending,null); }
     }
-    public synchronized void disconnect() throws IOException { vault.delete(); token=new LinkedHashMap<>(); }
+    public synchronized void disconnect() throws IOException {
+        if(isConnecting()) throw new IOException("Cancelá el inicio de sesión antes de desconectar la cuenta."); vault.delete(); token=new LinkedHashMap<>(); sessionProblem="";
+    }
     static String random(int bytes) { byte[] b=new byte[bytes]; new SecureRandom().nextBytes(b); return Base64.getUrlEncoder().withoutPadding().encodeToString(b); }
     static String encode(String s) { return URLEncoder.encode(s,StandardCharsets.UTF_8); }
-    static String form(Map<String,String> values) { StringJoiner j=new StringJoiner("&"); values.forEach((k,v)->j.add(encode(k)+"="+encode(v))); return j.toString(); }
+    static String form(Map<String,String> values) { StringJoiner join=new StringJoiner("&"); values.forEach((k,v)->join.add(encode(k)+"="+encode(v))); return join.toString(); }
     static Map<String,String> query(String query) {
-        Map<String,String> out=new HashMap<>(); if(query==null) return out;
-        for(String part:query.split("&")) { String[] kv=part.split("=",2); if(kv.length==2) out.put(URLDecoder.decode(kv[0],StandardCharsets.UTF_8),URLDecoder.decode(kv[1],StandardCharsets.UTF_8)); }
-        return out;
+        Map<String,String> result=new HashMap<>(); if(query==null) return result;
+        for(String part:query.split("&")) { String[] pair=part.split("=",2); if(pair.length==2) result.put(URLDecoder.decode(pair[0],StandardCharsets.UTF_8),URLDecoder.decode(pair[1],StandardCharsets.UTF_8)); }
+        return result;
     }
 }

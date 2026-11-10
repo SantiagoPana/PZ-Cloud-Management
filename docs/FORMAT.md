@@ -38,3 +38,9 @@ El ZIP sigue siendo schema 1. Los JSON laterales agregan `summary`, `bytes` y `m
 `config.json` agrega `cloudMode` (`none`, `folder`, `drive`), `syncFolder` y `setupComplete`. Al detectar un cliente OAuth anterior conserva el modo directo. La configuración de mundos y los identificadores se conservan.
 
 El modo carpeta publica `PZCloud-<snapshotId>.zip` y `PZCloud-<snapshotId>.json` en el destino; el segundo incluye metadatos de presentación y SHA-256. El catálogo ignora marcadores incompletos, renombrados por conflictos o sin un ZIP del tamaño esperado.
+
+## Cliente del autor en la 2.1
+
+Un portable configurado incluye `/auth/google-client.json` como recurso del JAR. El autor lo suministra al compilar; el recurso no proviene de un token del usuario. Al iniciar una sesión se guarda el cliente elegido en la carpeta de datos para conservar su identidad en actualizaciones. La configuración de usuario existente tiene prioridad sobre nuevos valores distribuidos.
+
+`GOOGLE_AUTH_STATUS.json` del portable contiene solo versión y estado de inclusión de cliente. No contiene IDs, secretos ni tokens. La ausencia de cliente deshabilita el botón de conexión real con un mensaje para el autor.

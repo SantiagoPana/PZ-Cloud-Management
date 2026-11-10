@@ -11,3 +11,5 @@ Los ZIP no tienen cifrado propio con contraseña: incluyen los archivos de la pa
 Desconectar elimina la sesión de esta instalación; no revoca el proyecto entero ni elimina los respaldos remotos. Podés revocar el acceso desde los ajustes de tu cuenta Google. Eliminar una versión de la aplicación borra permanentemente ese archivo de Drive, con confirmación explícita en la interfaz.
 
 El modo local y el modo carpeta no crean un cliente HTTP. El gestor no registra líneas de comandos de otros programas ni envía información de procesos; las consultas locales se usan para reconocer el estado de Zomboid.
+
+La ventana de inicio de sesión no recibe un nombre de usuario ni una contraseña. Abre el navegador del sistema y recibe un código de autorización mediante un listener local temporal que se cierra al terminar, cancelar o vencer. La sesión anterior se conserva si se cancela un cambio de cuenta. La configuración pública del cliente de escritorio puede venir incluida por el autor; eso no incluye la sesión personal del autor.

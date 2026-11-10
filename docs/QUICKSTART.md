@@ -1,4 +1,4 @@
-# Usar PZ Cloud 2.0
+# Usar PZ Cloud 2.1
 
 ## Primera vez
 
@@ -8,9 +8,13 @@ Extraé la aplicación portable completa y abrí **PZCloudManagement.exe**. En C
 | --- | --- |
 | Solo en esta PC | Nada más; crea respaldos locales |
 | Carpeta de Drive u OneDrive que ya uso | Elegir una carpeta que tu aplicación de nube ya sincronice |
-| Google Drive directo | Tu conexión de la 1.0 o [configurar una conexión de Google](GOOGLE_DRIVE.md) |
+| Google Drive directo | Pulsar **Iniciar sesión con Google** en una edición habilitada por el autor |
 
 Para el modo carpeta, el gestor prepara una subcarpeta `PZCloudManagement` en el lugar elegido. En la otra PC elegí el mismo lugar dentro de esa cuenta. No copies la carpeta de partidas activas directamente sobre la nube: el gestor guarda versiones verificadas por separado.
+
+## Conectar con la ventanita
+
+**Iniciar sesión con Google** abre el selector oficial de cuenta en el navegador y recibe la respuesta automáticamente. La sesión se recuerda y la ventana se cierra al terminar. El usuario no elige archivos de conexión. Si Google no está habilitado en la edición, corresponde al autor configurar el programa una sola vez; la ventana lo explica.
 
 ## Guardar
 

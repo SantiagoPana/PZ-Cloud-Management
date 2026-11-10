@@ -1,10 +1,12 @@
-# Arquitectura 2.0
+# Arquitectura 2.1
 
 Se conserva el motor de archivos de la 1.0 y se reemplazan la interfaz y la ejecución periódica.
 
 | Componente | Función |
 | --- | --- |
 | ManagerWindow | Dos vistas principales, configuración guiada, modelos pequeños, tareas fuera del hilo de interfaz |
+| SignInDialog | Ventana nativa de ingreso, navegador del sistema, retorno automático y cancelación sin sondeo |
+| GoogleClientDefaults / PublisherConfig | Identidad de escritorio incluida por el autor al compilar, separada de las sesiones de usuarios |
 | BackgroundService | WatchService para solicitudes; sondeo de proceso solo con protección; reintentos solo con pendientes |
 | SaveManager | Catálogo lateral compacto, migración, cola, retención y operaciones verificadas |
 | ConfiguredCloud | Selecciona y crea el proveedor solo cuando se solicita una operación |
@@ -15,6 +17,8 @@ Se conserva el motor de archivos de la 1.0 y se reemplazan la interfaz y la ejec
 | GameBridge | Catálogo/solicitudes Lua sin exponer tokens ni permitir restaurar un mundo abierto |
 
 ## Reposo
+
+El ingreso utiliza el mismo trabajador de la aplicación y un callback loopback temporal. Al terminar, cancelar o vencer la espera se cierra el listener. No se incorpora un motor de navegador ni un servicio de autenticación residente. La sesión conserva el cliente con el que se creó para mantener compatibilidad entre actualizaciones.
 
 Sin protección ni pendientes, no se programan tareas temporizadas. Un hilo daemon duerme esperando eventos del sistema para abrir la ventana o atender al mod; no lee las partidas. La ventana manual se cierra terminando el proceso.
 
