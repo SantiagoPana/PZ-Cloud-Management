@@ -32,13 +32,13 @@ public final class SelfTest {
         Config c=new Config(dir(name+"/app")); c.set("zomboid",dir(name+"/Zomboid").toString()); return new SaveManager(c,guard,cloud,s->{});
     }
     public static void main(String[] args) throws Exception {
-        if(args.length>0&&args[0].equals("process-probe")) { System.in.read(); return; }
+        if(args.length>0&&args[0].equals("process-probe")) { System.out.println("READY"); System.out.flush(); System.in.read(); return; }
         root=Files.createTempDirectory("pzcloud-tests-").toRealPath();
         try {
             test("Real process enumeration recognizes a running PZ-marked Java process",()-> {
                 String java=Path.of(System.getProperty("java.home"),"bin",System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")?"java.exe":"java").toString();
                 Process probe=new ProcessBuilder(java,"-Dtest.pz.marker=zombie.GameWindow","-cp",System.getProperty("java.class.path"),SelfTest.class.getName(),"process-probe").start();
-                try { ok(new GameGuard().running()); } finally { probe.getOutputStream().close(); if(!probe.waitFor(5,TimeUnit.SECONDS)) probe.destroyForcibly(); }
+                try { eq(new BufferedReader(new InputStreamReader(probe.getInputStream())).readLine(),"READY"); ok(new GameGuard().running()); } finally { probe.getOutputStream().close(); if(!probe.waitFor(5,TimeUnit.SECONDS)) probe.destroyForcibly(); }
             });
             jsonTests(); archiveTests(); managerTests(); cloudTests(); authTests();
             System.out.println("OK: "+passed+" integration tests; no real game saves or Google account accessed.");
