@@ -47,7 +47,7 @@ public final class GameBridge {
     }
     public void installMod() throws IOException {
         manager.guard.requireClosed(); Path modRoot=manager.config.zomboid().resolve("mods/PZCloudManagement"); Files.createDirectories(modRoot.resolve("common"));
-        for(String file:List.of("42/mod.info","42/poster.png","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI.json","42/media/lua/shared/Translate/ES/UI.json","42/media/lua/shared/Translate/AR/UI.json")) {
+        for(String file:List.of("42/mod.info","42/poster.png","42/cloud.png","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI.json","42/media/lua/shared/Translate/ES/UI.json","42/media/lua/shared/Translate/AR/UI.json")) {
             try(var in=GameBridge.class.getResourceAsStream("/mod/PZCloudManagement/"+file)) {
                 if(in==null) throw new IOException("El paquete no incluye el mod. Ejecutá scripts/build.ps1 antes de instalar.");
                 FilesEx.atomicWrite(modRoot.resolve(file),in.readAllBytes());
