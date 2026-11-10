@@ -65,7 +65,7 @@ Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC
 
 Solo un jugador; no servidores dedicados ni partidas multijugador alojadas. Usá las mismas builds y mods para cargar una copia en otra PC. Volver al menú no cierra el proceso: el respaldo automático espera a salir completamente de Zomboid.
 
-El botón **Minimizar a la bandeja** deja Knox Net activo incluso sin copias pendientes; el icono lo reabre y **Salir** lo cierra por completo. Al pulsar la X, sigue en bandeja si hay protección automática o envíos pendientes; de lo contrario sale normalmente. Si el sistema no soporta bandeja, se minimiza a la barra de tareas.
+El botón **Minimizar a la bandeja** deja Knox Net activo incluso sin copias pendientes; el icono lo reabre y **Salir** lo cierra por completo. **La X de la esquina superior derecha siempre cierra Knox Net por completo**. Si hay un respaldo o restauración en curso, termina esa operación antes de salir. Si el sistema no soporta bandeja, el botón minimiza a la barra de tareas.
 
 ## Desde el código
 
@@ -81,6 +81,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 [Arquitectura](docs/ARCHITECTURE.md) · [Formato](docs/FORMAT.md) · [Google directo](docs/GOOGLE_DRIVE.md) · [Pruebas](docs/TEST_PLAN.md) · [Privacidad](docs/PRIVACY.md).
 
 [Cómo está hecha la aplicación](docs/HOW_BUILT.md) · [Controles de seguridad y Avast](docs/SECURITY.md).
+
+## Rama independiente de Workshop
+
+La rama [`workshop`](https://github.com/SantiagoPana/PZ-Cloud-Management/tree/workshop) es la **fuente del mod editada por el autor**. GitHub Actions la descarga aparte, copia sus archivos solo al espacio de compilación y prepara el ZIP y el mod que incluye el programa. No fusiona ni modifica esa rama. Conserva el icono `cloud.png`, el nombre elegido, el ID `KNManagement` y la estructura de carpeta `Knox Net`.
 
 ## Mod opcional para Workshop
 
