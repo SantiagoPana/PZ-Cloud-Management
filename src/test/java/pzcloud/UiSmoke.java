@@ -42,7 +42,7 @@ public final class UiSmoke {
         SwingUtilities.invokeAndWait(()-> { try { var bitmap=new java.awt.image.BufferedImage(window.getWidth(),window.getHeight(),java.awt.image.BufferedImage.TYPE_INT_RGB); var g=bitmap.createGraphics(); window.paint(g); g.dispose(); ImageIO.write(bitmap,"png",output.toFile()); } catch(Exception ex) { throw new RuntimeException(ex); } });
     }
     public static void main(String[] args) throws Exception {
-        Path temp=Files.createTempDirectory("pzcloud-ui-").toRealPath(); Config c=new Config(temp.resolve("app")); c.set("zomboid",temp.resolve("Zomboid").toString()); c.set("setupComplete","true");
+        Path temp=Files.createTempDirectory("pzcloud-ui-").toRealPath(); Config c=new Config(temp.resolve("app")); c.set("zomboid",temp.resolve("Zomboid").toString()); c.set("setupComplete","true"); c.set("language","es");
         SaveManager manager=new SaveManager(c,s->{}); Path world=c.saves().resolve("Sandbox/Riverside - Santiago"); Files.createDirectories(world); Files.writeString(world.resolve("players.db"),"fixture");
         var w=c.world("Sandbox","Riverside - Santiago"); w.set("destination","local"); manager.backup(w,"manual");
         Path second=c.saves().resolve("Apocalypse/Muldraugh"); Files.createDirectories(second); Files.writeString(second.resolve("map_ver.bin"),"42.22.1");
@@ -60,6 +60,19 @@ public final class UiSmoke {
             window.showApp();
             SwingUtilities.invokeAndWait(()-> {
                 if(!window.isVisible()||window.getState()!=Frame.NORMAL) throw new AssertionError("Window failed to return from the tray");
+            });
+            // Change the language without restarting. The user's worlds and Google settings must survive.
+            SwingUtilities.invokeAndWait(()-> {
+                window.applyLanguage("en");
+                if(button("Back up save")==null||button("Settings")==null||button("Minimize to tray")==null)
+                    throw new AssertionError("English UI not applied immediately");
+                if(!"en".equals(c.get("language")) || !"none".equals(c.get("cloudMode")))
+                    throw new AssertionError("Language change modified backup settings");
+                window.applyLanguage("es");
+                if(button("Guardar partida")==null||button("Configuración")==null)
+                    throw new AssertionError("Spanish UI not restored");
+                if(!"es".equals(c.get("language")))
+                    throw new AssertionError("Language preference not persisted");
             });
             // Native dialog is interacted with through Swing, using the same actions as a user.
             SwingUtilities.invokeLater(()->button("Configuración").doClick()); JDialog config=dialog();
