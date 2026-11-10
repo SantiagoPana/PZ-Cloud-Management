@@ -16,9 +16,15 @@ fallback = dict(re.findall(r'(\w+) = "([^"]*)"', lua.split('local fallback = {',
 info = (mod / 'mod.info').read_text(encoding='utf-8').splitlines()
 assert 'id=KNManagement' in info
 assert 'modversion=2.3.5' in info
+icon_files=[line.split('=',1)[1] for line in info if line.startswith('icon=')]
+for filename in icon_files:
+    icon = (mod / filename).read_bytes()
+    assert icon[:8] == b'\\x89PNG\\r\
+\\x1a\
+', f'Invalid Workshop icon {filename}'
 workshop_metadata = (repo / 'workshop/workshop.txt').read_text(encoding='utf-8')
 assert workshop_metadata.startswith('version=1\nid=')
-assert 'releases/tag/v2.3.5' in workshop_metadata
+assert 'https://github.com/SantiagoPana/PZ-Cloud-Management/releases/' in workshop_metadata
 assert 'math.floor((screenWidth - PZCloud.button.width) / 2)' in lua
 translations = {}
 for language in ('EN', 'ES', 'AR'):
