@@ -60,7 +60,15 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
         JPanel settings=vertical(); connection.setForeground(GREEN); settings.add(connection); settings.add(Box.createVerticalStrut(12)); googleButton=button("Iniciar sesión con Google",this::connectDrive); settings.add(row(googleButton,button("Configuración",this::setup))); header.add(settings,BorderLayout.EAST); root.add(header,BorderLayout.NORTH);
         tabs.addTab("Mis partidas",home()); tabs.addTab("Recuperar partida",recoverPanel()); root.add(tabs,BorderLayout.CENTER);
         JPanel footer=new JPanel(new BorderLayout(12,0)); JPanel state=vertical(); state.add(status); progress.setIndeterminate(false); progress.setVisible(false); progress.setPreferredSize(new Dimension(200,5)); state.add(progress); footer.add(state,BorderLayout.CENTER);
-        footer.add(button("Ver actividad",()->JOptionPane.showMessageDialog(this,new JScrollPane(activity),"Actividad",JOptionPane.PLAIN_MESSAGE)),BorderLayout.EAST); root.add(footer,BorderLayout.SOUTH);
+        // This explicit action remains available even during a backup: hiding the UI must not cancel the work.
+        JButton minimizeButton=new JButton("Minimizar a la bandeja");
+        minimizeButton.setMargin(new Insets(11,16,11,16)); minimizeButton.setFocusPainted(false);
+        minimizeButton.setToolTipText("Knox Net sigue funcionando; abrilo desde el icono junto al reloj.");
+        minimizeButton.addActionListener(e->minimizeToTray());
+        JPanel footerActions=new JPanel(new FlowLayout(FlowLayout.RIGHT,8,0));
+        footerActions.add(minimizeButton);
+        footerActions.add(button("Ver actividad",()->JOptionPane.showMessageDialog(this,new JScrollPane(activity),"Actividad",JOptionPane.PLAIN_MESSAGE)));
+        footer.add(footerActions,BorderLayout.EAST); root.add(footer,BorderLayout.SOUTH);
         activity.setEditable(false); activity.setLineWrap(true); activity.setWrapStyleWord(true); activity.setFont(new Font(Font.MONOSPACED,Font.PLAIN,12));
         worlds.addListSelectionListener(e->{ if(!e.getValueIsAdjusting()&&!updating) { var w=worlds.getSelectedValue(); selectedKey=w==null?"":w.key(); showSelected(); } });
         recovery.addListSelectionListener(e->{ if(!e.getValueIsAdjusting()) updateActions(); });
@@ -226,7 +234,21 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
     public void showApp() { SwingUtilities.invokeLater(()-> { setVisible(true); setState(Frame.NORMAL); toFront(); }); }
     static void openBrowser(URI uri) { try { if(Desktop.isDesktopSupported()&&Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) { Desktop.getDesktop().browse(uri); return; } } catch(IOException ignored) {} SwingUtilities.invokeLater(()->JOptionPane.showInputDialog(null,"Abrí esta dirección en tu navegador:",uri.toString())); }
     private static String friendlyDate(String text) { try { return DateTimeFormatter.ofPattern("dd/MM/yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(text)); } catch(Exception e) { return text; } }
-    private void closeWindow() { if(busy) { message("Esperá a que termine la operación antes de cerrar."); return; } if(manager.config.automaticExits()||manager.hasPending()&&manager.canSync()) { setVisible(false); dispose(); if(tray!=null) tray.displayMessage("Knox Net","La protección sigue en segundo plano. Usá Salir para detenerla.",TrayIcon.MessageType.INFO); } else exit(); }
+    private void minimizeToTray() {
+        if(tray!=null) {
+            setVisible(false); // Keep the live window and process: do NOT dispose the frame.
+            tray.displayMessage("Knox Net","Sigue abierto en la bandeja. Hacé clic en el icono para volver, o elegí Salir para cerrarlo.",TrayIcon.MessageType.INFO);
+        } else {
+            // On systems without a tray icon, never leave an inaccessible hidden process.
+            setState(Frame.ICONIFIED);
+        }
+    }
+    boolean trayAvailable() { return tray!=null; } // For isolated native UI tests.
+    private void closeWindow() {
+        if(busy) { message("Esperá a que termine la operación antes de cerrar."); return; }
+        if(manager.config.automaticExits()||(manager.hasPending()&&manager.canSync())) minimizeToTray();
+        else exit();
+    }
     private void exit() { if(busy) { message("Esperá a que termine la operación antes de salir."); return; } close(); System.exit(0); }
     public void close() { try { service.close(); } catch(IOException ignored) {} worker.shutdownNow(); if(tray!=null) SystemTray.getSystemTray().remove(tray); dispose(); }
     private void installTray() {
