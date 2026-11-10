@@ -1,0 +1,51 @@
+name: Test and package
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Integration tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/test.ps1
+      - name: Integration tests (Linux)
+        if: runner.os == 'Linux'
+        run: bash scripts/test.sh
+  windows-portable:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build native app with private Java runtime
+        shell: pwsh
+        run: ./scripts/build.ps1 -Package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PZCloudManagement-Windows-x64
+          path: build/portable/PZCloudManagement/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,16 @@
+UI_EN = {
+    UI_PZCloud_Title = "Cloud Saves",
+    UI_PZCloud_Subtitle = "Google Drive versions managed by the desktop companion.",
+    UI_PZCloud_RestoreHint = "To restore a downloaded world, close Zomboid completely and use the desktop app.",
+    UI_PZCloud_Waiting = "Waiting for the companion...",
+    UI_PZCloud_WriteError = "Could not write request. Check Zomboid/Lua permissions.",
+    UI_PZCloud_Select = "Select a version first.",
+    UI_PZCloud_Done = "Done. Downloaded versions are available in the desktop companion.",
+    UI_PZCloud_CompanionError = "The operation failed. Open the companion to view the error.",
+    UI_PZCloud_Offline = "Start PZ Cloud Management on this PC, connect Drive, then refresh.",
+    UI_PZCloud_Ready = "Start the desktop companion to connect to Google Drive.",
+    UI_PZCloud_Refresh = "Refresh",
+    UI_PZCloud_Download = "Download copy",
+    UI_PZCloud_Open = "Open desktop manager",
+    UI_PZCloud_Close = "Close",
+}

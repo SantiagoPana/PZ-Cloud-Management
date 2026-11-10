@@ -1,0 +1,6 @@
+name=PZ Cloud Management
+id=PZCloudManagement
+author=Santiago Martin
+description=Cloud Saves browser for the PZ Cloud Management desktop companion. Browse and download Google Drive backups. Restore with the game fully closed in the companion.
+modversion=1.0.0-alpha.1
+versionMin=42.0

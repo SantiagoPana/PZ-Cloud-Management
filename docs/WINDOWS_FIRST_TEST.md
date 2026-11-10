@@ -1,34 +1,13 @@
-# Primera prueba en Windows 11 (sin partidas reales)
+# Primera prueba en Windows
 
-## Preparacion
+1. En GitHub Desktop, seleccionar `SantiagoPana/PZ-Cloud-Management` y rama `development`; Fetch origin → Pull origin.
+2. Instalar JDK 21 si hace falta: `winget install Microsoft.OpenJDK.21`. Abrir una terminal nueva después.
+3. Ejecutar `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1` en el repositorio. Usa mundos ficticios en TEMP y HTTP local. Resultado: `OK: 50 integration tests`.
+4. Abrir `Start-PZCloud.cmd`; seleccionar la carpeta correcta de Zomboid en Configuración.
+5. Crear una partida descartable, cerrar el juego y usar Respaldar ahora. La copia debe aparecer en el historial.
+6. Seguir [GOOGLE_DRIVE.md](GOOGLE_DRIVE.md) para conectar la cuenta. Subir, actualizar nube y descargar en la segunda PC.
+7. Restaurar con un nombre nuevo, abrir PZ y probar que carga.
 
-1. Instalar GitHub Desktop: https://desktop.github.com/
-2. Iniciar sesion, clonar el repositorio `SantiagoPana/PZ-Cloud-Management`.
-3. Cambiar la rama de `main` a `development` con el selector **Current branch**.
-4. Instalar JDK 21 si `javac -version` no funciona. En PowerShell: `winget install Microsoft.OpenJDK.21` y abrir una terminal nueva.
+Si se usa el portable de Actions, Java ya viene incluido. La suite desde el código requiere JDK; el portable solo requiere extraer su carpeta completa.
 
-## Primera prueba segura
-
-Cerrar Project Zomboid. En GitHub Desktop: **Repository > Open in Explorer**. Abrir PowerShell en esa carpeta y ejecutar:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\smoke-test.ps1
-```
-
-El script genera una partida **ficticia** en TEMP, compila las dos clases Java del repositorio, comprime el archivo ficticio en ZIP, lo descomprime, compara SHA-256 y borra los temporales. No toca tus partidas de Zomboid.
-
-**Resultado esperado:** `[4/4] OK. ZIP creado, extraido y verificado. Archivo original intacto.`
-
-Si falla, copiar el error completo. No instalar como mod todavía. Este es un test de motor Java aislado.
-
-## GitHub Desktop: recordatorio
-
-- **Fetch origin:** consultar cambios remotos.
-- **Pull origin:** traerlos a la PC.
-- **Commit:** registrar cambios en tu repositorio local.
-- **Push origin:** publicarlos en GitHub.
-- Trabajar solo en `development`; `main` es la base protegida.
-
-## Proxima prueba
-
-Cuando el smoke test pase, probaremos una partida **descartable y cerrada**, primero sin restauracion. Aun falta integrar Java con ZombieBuddy, detectar estado del mundo y validar el menu principal en Build 42.21.
+La rama `main` conserva la base anterior. No instalar la aplicación ni el JAR dentro de los archivos del juego. El botón Lua se instala desde Configuración si se desea.

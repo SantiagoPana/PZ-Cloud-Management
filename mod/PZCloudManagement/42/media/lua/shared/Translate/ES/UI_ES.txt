@@ -1,0 +1,16 @@
+UI_ES = {
+    UI_PZCloud_Title = "Partidas en la nube",
+    UI_PZCloud_Subtitle = "Versiones de Google Drive administradas por el gestor de escritorio.",
+    UI_PZCloud_RestoreHint = "Para restaurar una partida descargada, cerrá Zomboid por completo y usá la aplicación.",
+    UI_PZCloud_Waiting = "Esperando al gestor de escritorio...",
+    UI_PZCloud_WriteError = "No se pudo escribir la solicitud. Revisá los permisos de Zomboid/Lua.",
+    UI_PZCloud_Select = "Elegí una versión primero.",
+    UI_PZCloud_Done = "Listo. Las versiones descargadas están disponibles en el gestor de escritorio.",
+    UI_PZCloud_CompanionError = "No se completó la operación. Abrí el gestor para ver el error.",
+    UI_PZCloud_Offline = "Abrí PZ Cloud Management en esta PC, conectá Drive y actualizá.",
+    UI_PZCloud_Ready = "Iniciá el gestor de escritorio para conectar Google Drive.",
+    UI_PZCloud_Refresh = "Actualizar",
+    UI_PZCloud_Download = "Descargar copia",
+    UI_PZCloud_Open = "Abrir gestor de escritorio",
+    UI_PZCloud_Close = "Cerrar",
+}

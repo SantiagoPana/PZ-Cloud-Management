@@ -1,30 +1,27 @@
-# Roadmap
+# Estado 1.0.0-alpha.1
 
-## v0.1 — Prototype audit
-- [ ] Verify existing v0.1 F8 selection prototype against Build 42.21.
-- [ ] Confirm mod structure and persistent per-world settings (not only player modData).
+## Implementado
 
-## v0.2 — Local save manager
-- [ ] Main-menu entry and list of worlds.
-- [ ] Per-save automatic/manual and timing preferences.
-- [ ] ZombieBuddy Java bridge proof of concept.
-- [ ] Manual snapshot on inactive save with manifest and checksum.
-- [ ] Safe restore with rollback and integrity checks.
+- [x] Aplicación de escritorio y CLI.
+- [x] Identificación de mundos, preferencias por partida y modos manual/automático.
+- [x] Snapshots con SHA-256, CRC, detección de cambios y publicación temporal.
+- [x] Restauración con respaldo previo, staging, journal y recuperación.
+- [x] Cola durable, retención, importación/exportación y una instancia por equipo.
+- [x] Detección de cierre del proceso y respaldo previo al lanzamiento desde el gestor.
+- [x] Google OAuth PKCE/state/loopback, renovación y almacenamiento de sesión.
+- [x] Drive real mediante API: listar, subir, reanudar, descargar y eliminar versiones.
+- [x] Historiales divergentes sin sobrescritura automática.
+- [x] Mod Lua opcional y traducciones EN/ES.
+- [x] Suite de integración, build reproducible y workflow de portable Windows.
 
-## v0.3 — Lifecycle automation
-- [ ] Validate pre-load and post-save hooks.
-- [ ] Automatic snapshots on configured events.
-- [ ] Snapshot retention and disk-space checks.
+## Validaciones pendientes para una versión estable
 
-## v0.4 — Google Drive (experimental)
-- [ ] OAuth and secure token storage.
-- [ ] Upload and download verified snapshots.
-- [ ] Cloud saves browser from main menu.
-- [ ] Offline queue and version conflicts.
+- [ ] Conectar una cuenta Google real con su cliente OAuth y completar ida/vuelta entre dos PCs.
+- [ ] Cargar una partida descartable restaurada dentro de B42.22.1.
+- [ ] Validar botón y panel Lua con el menú de la build objetivo y otros mods de menú.
+- [ ] Probar procesos, suspensión, Steam y cierre abrupto en el Windows 11 del usuario.
+- [ ] Medir partidas grandes reales, discos lentos y cuota de Drive.
 
-## v0.5 — Hardening
-- [ ] Cross-PC tests, interruptions, large saves, compatibility warnings.
-- [ ] Workshop packaging and user documentation.
+## Mejoras futuras
 
-## Out of scope initially
-Dedicated servers and hosted multiplayer saves; live in-world snapshotting; Steam Cloud API integration.
+Respaldos incrementales/deduplicación, más proveedores y soporte específico de servidores. No forman parte de esta versión.

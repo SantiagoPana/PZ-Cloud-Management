@@ -12,3 +12,16 @@ backups/
 build/
 out/
 *.class
+
+
+# Companion state / OAuth clients must never be committed
+config.json
+google-client.json
+client_secret*.json
+credentials*.json
+sessions/
+*.meta.json
+*.download
+*.chunk
+*.part
+runtime/
