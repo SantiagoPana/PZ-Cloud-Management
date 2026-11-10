@@ -12,6 +12,14 @@ repo = pathlib.Path(__file__).resolve().parent.parent
 mod = repo / 'mod/PZCloudManagement/42'
 lua = (mod / 'media/lua/client/PZCloud/CloudSaves.lua').read_text(encoding='utf-8')
 fallback = dict(re.findall(r'(\w+) = "([^"]*)"', lua.split('local fallback = {', 1)[1].split('\n}', 1)[0]))
+# Keep the public workshop metadata and game mod synchronized.
+info = (mod / 'mod.info').read_text(encoding='utf-8').splitlines()
+assert 'id=KNManagement' in info
+assert 'modversion=2.3.4' in info
+workshop_metadata = (repo / 'workshop/workshop.txt').read_text(encoding='utf-8')
+assert workshop_metadata.startswith('version=1\nid=')
+assert 'releases/tag/v2.3.4' in workshop_metadata
+assert 'math.floor((screenWidth - PZCloud.button.width) / 2)' in lua
 translations = {}
 for language in ('EN', 'ES', 'AR'):
     path = mod / 'media/lua/shared/Translate' / language / 'UI.json'
