@@ -8,7 +8,9 @@ import java.util.concurrent.*;
 
 /** Conservative process guard. Windows Java command lines require the native CIM fallback. */
 public class GameGuard {
+    private volatile ProcessHandle observed;
     public boolean running() throws IOException {
+        ProcessHandle known=observed; if(known!=null&&known.isAlive()) return true; observed=null;
         boolean windows=System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
         List<Long> unknownJava=new ArrayList<>();
         try(var processes=ProcessHandle.allProcesses()) {
@@ -18,9 +20,9 @@ public class GameGuard {
                 String line=info.commandLine().orElse("").toLowerCase(Locale.ROOT);
                 String exe;
                 try { exe=Path.of(command).getFileName().toString(); } catch(Exception e) { exe=command; }
-                if(exe.startsWith("projectzomboid")) return true;
+                if(exe.startsWith("projectzomboid")) { observed=process; return true; }
                 if(exe.equals("java")||exe.equals("java.exe")||exe.equals("javaw.exe")) {
-                    if(isGameLine(line)||command.contains("projectzomboid")) return true;
+                    if(isGameLine(line)||command.contains("projectzomboid")) { observed=process; return true; }
                     if(windows&&line.isBlank()) unknownJava.add(process.pid());
                 }
             }
@@ -44,7 +46,7 @@ public class GameGuard {
             Object parsed=Json.parse(text); List<Object> rows=parsed instanceof List<?>?Json.array(parsed):List.of(parsed);
             for(Object value:rows) {
                 Map<String,Object> row=Json.object(value); String line=Json.str(row,"CommandLine");
-                if(isGameLine(line)) return true;
+                if(isGameLine(line)) { observed=ProcessHandle.of(Json.number(row,"ProcessId")).orElse(null); return observed!=null; }
                 if(line.isBlank()&&ProcessHandle.of(Json.number(row,"ProcessId")).map(ProcessHandle::isAlive).orElse(false)) throw new IOException("Windows no permite comprobar un proceso Java activo. Cerrá ese proceso antes de respaldar o restaurar.");
             }
             return false;

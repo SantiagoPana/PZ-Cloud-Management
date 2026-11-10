@@ -16,6 +16,7 @@ public final class GameBridge {
         Path state=manager.config.home.resolve("bridge-state.json");
         if(Files.exists(state)) last=Json.str(FilesEx.readJson(state),"last");
     }
+    void showWindow() { showWindow.run(); }
     private Path lua(String name) throws IOException { Path dir=manager.config.zomboid().resolve("Lua"); Files.createDirectories(dir); return dir.resolve(name); }
     public void publish(List<CloudProvider.Remote> versions) throws IOException {
         StringBuilder text=new StringBuilder();

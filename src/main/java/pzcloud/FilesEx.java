@@ -12,10 +12,18 @@ public final class FilesEx {
     public static MessageDigest digest(String type) {
         try { return MessageDigest.getInstance(type); } catch(NoSuchAlgorithmException ex) { throw new IllegalStateException(ex); }
     }
+    private static final ThreadLocal<byte[]> BUFFERS=ThreadLocal.withInitial(()->new byte[64*1024]);
+    static byte[] buffer() { return BUFFERS.get(); }
+    public record Hashes(String sha256,String md5) {}
     public static String hash(Path p, String type) throws IOException {
-        MessageDigest d = digest(type);
-        try(InputStream in = Files.newInputStream(p)) { byte[] b = new byte[128*1024]; int n; while((n=in.read(b))!=-1) d.update(b,0,n); }
+        MessageDigest d=digest(type);
+        try(InputStream in=Files.newInputStream(p)) { byte[] b=buffer(); int n; while((n=in.read(b))!=-1) d.update(b,0,n); }
         return HexFormat.of().formatHex(d.digest());
+    }
+    public static Hashes hashes(Path p) throws IOException {
+        MessageDigest sha=digest("SHA-256"),md5=digest("MD5");
+        try(InputStream in=Files.newInputStream(p)) { byte[] b=buffer(); int n; while((n=in.read(b))!=-1) { sha.update(b,0,n); md5.update(b,0,n); } }
+        return new Hashes(HexFormat.of().formatHex(sha.digest()),HexFormat.of().formatHex(md5.digest()));
     }
     public static void atomicWrite(Path target, String content) throws IOException { atomicWrite(target, content.getBytes(StandardCharsets.UTF_8)); }
     public static void atomicWrite(Path target, byte[] content) throws IOException {

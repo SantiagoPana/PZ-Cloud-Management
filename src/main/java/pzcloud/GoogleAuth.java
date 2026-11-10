@@ -17,7 +17,11 @@ public final class GoogleAuth {
     static final String SCOPE="https://www.googleapis.com/auth/drive.appdata";
     private final Path clientFile;
     private final TokenVault vault;
-    private final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build();
+    private HttpClient http;
+    synchronized HttpClient http() {
+        if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build();
+        return http;
+    }
     private Map<String,Object> token;
     private final URI tokenEndpoint;
     public GoogleAuth(Path home) throws IOException { this(home,URI.create("https://oauth2.googleapis.com/token")); }
@@ -94,7 +98,7 @@ public final class GoogleAuth {
     private Map<String,Object> tokenRequest(Map<String,String> body) throws IOException {
         HttpRequest request=HttpRequest.newBuilder(tokenEndpoint).timeout(Duration.ofSeconds(30)).header("Content-Type","application/x-www-form-urlencoded").POST(HttpRequest.BodyPublishers.ofString(form(body))).build();
         try {
-            HttpResponse<InputStream> res=http.send(request,HttpResponse.BodyHandlers.ofInputStream()); String text;
+            HttpResponse<InputStream> res=http().send(request,HttpResponse.BodyHandlers.ofInputStream()); String text;
             try(InputStream in=res.body()) { text=new String(in.readNBytes(1024*1024),StandardCharsets.UTF_8); }
             if(res.statusCode()!=200) throw new IOException(res.statusCode()==400?"La sesión de Google venció o fue revocada. Volvé a conectar Drive.":"Google no pudo autorizar la sesión (HTTP "+res.statusCode()+").");
             return Json.object(Json.parse(text));

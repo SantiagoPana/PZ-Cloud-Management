@@ -40,7 +40,7 @@ public final class SelfTest {
                 Process probe=new ProcessBuilder(java,"-Dtest.pz.marker=zombie.GameWindow","-cp",System.getProperty("java.class.path"),SelfTest.class.getName(),"process-probe").start();
                 try { eq(new BufferedReader(new InputStreamReader(probe.getInputStream())).readLine(),"READY"); ok(new GameGuard().running()); } finally { probe.getOutputStream().close(); if(!probe.waitFor(5,TimeUnit.SECONDS)) probe.destroyForcibly(); }
             });
-            jsonTests(); archiveTests(); managerTests(); cloudTests(); authTests();
+            jsonTests(); archiveTests(); managerTests(); v2Tests(); cloudTests(); authTests();
             System.out.println("OK: "+passed+" integration tests; no real game saves or Google account accessed.");
         } finally { FilesEx.deleteTree(root); }
     }
@@ -179,6 +179,71 @@ public final class SelfTest {
             String before=Files.readString(path.resolve("players.db")); FilesEx.atomicWrite(request,"1|request_3|RESTORE|../../evil"); bridge.tick(); eq(Files.readString(path.resolve("players.db")),before); ok(Files.readString(request.getParent().resolve("pzcloud-status.txt")).contains("ERROR"));
         });
         test("Explicit cloud deletion updates local sync status",()-> { manager.queue(manager.history(w).get(0)); manager.sync(); var synced=manager.history(w).stream().filter(l->l.status().equals("synced")).findFirst(); ok(synced.isPresent()); if(synced.isPresent()) { var remote=cloud.list().stream().filter(r->r.id().equals(synced.get().snapshot().id())).findFirst().orElseThrow(); manager.deleteCloud(remote); ok(manager.history(w).stream().filter(l->l.snapshot().id().equals(remote.id())).allMatch(l->l.status().equals("local"))); } });
+    }
+    static void v2Tests() throws Exception {
+        test("SHA-256 and MD5 streaming pass returns both correct checksums",()-> {
+            Path p=dir("v2/hash").resolve("data.bin"); Files.writeString(p,"two hashes, one read"); var pair=FilesEx.hashes(p); eq(pair.sha256(),FilesEx.hash(p,"SHA-256")); eq(pair.md5(),FilesEx.hash(p,"MD5"));
+        });
+        Guard guard=new Guard(); FakeCloud fake=new FakeCloud(); SaveManager m=manager("v2/catalog",guard,fake);
+        Path save=m.config.saves().resolve("Sandbox/World"); Files.createDirectories(save); Files.writeString(save.resolve("data.bin"),"progress"); var world=m.config.world("Sandbox","World"); world.set("destination","local"); var copy=m.backup(world,"manual");
+        test("Old 1.x sidecar upgrades without changing identity, hash or delivery status",()-> {
+            Path sidecar=m.config.archives().resolve(copy.snapshot().id()+".meta.json"); var state=FilesEx.readJson(sidecar); state.remove("summary"); state.remove("bytes"); state.remove("md5"); FilesEx.json(sidecar,state);
+            var upgraded=m.history(world).get(0); eq(upgraded.snapshot().id(),copy.snapshot().id()); eq(upgraded.snapshot().sha256(),copy.snapshot().sha256()); eq(upgraded.status(),"local"); ok(Files.size(sidecar)<8192);
+        });
+        test("Catalog can list without opening ZIPs; restore still rejects corrupt payload",()-> {
+            byte[] original=Files.readAllBytes(copy.snapshot().archive()); byte[] invalid=new byte[original.length]; Arrays.fill(invalid,(byte)7); Files.write(copy.snapshot().archive(),invalid);
+            eq(m.history(world).size(),1); fails(()->m.restore(m.history(world).get(0),"Sandbox","World",true)); eq(Files.readString(save.resolve("data.bin")),"progress"); Files.write(copy.snapshot().archive(),original);
+        });
+        test("Local mode creates no HTTP selector/client threads",()-> {
+            Set<Long> before=new HashSet<>(); Thread.getAllStackTraces().keySet().forEach(t->before.add(t.getId()));
+            SaveManager local=manager("v2/no-network",new Guard(),null); local.history(null); ok(!local.canSync());
+            ok(Thread.getAllStackTraces().keySet().stream().noneMatch(t->!before.contains(t.getId())&&t.getName().startsWith("HttpClient-")));
+        });
+        Path folder=dir("v2/cloud-folder"); FolderCloud cloud=new FolderCloud(folder,s->{}); var verified=m.engine.verify(copy.snapshot().archive(),copy.snapshot().sha256()); var remote=cloud.upload(verified);
+        test("Folder copies report folder delivery rather than confirmed Google upload",()-> { eq(cloud.deliveredStatus(),"folder"); eq(remote.get("transport"),"folder"); eq(cloud.list().size(),1); });
+        test("Folder backend round-trips verified snapshots to another PC",()-> { Path p=cloud.download(remote,dir("v2/download")); eq(m.engine.verify(p,verified.sha256()).id(),verified.id()); m.engine.restore(p,dir("v2/restore/Saves"),"Sandbox","Restored",verified.sha256()); eq(Files.readString(root.resolve("v2/restore/Saves/Sandbox/Restored/data.bin")),"progress"); });
+        test("Folder retry is idempotent and cannot overwrite different content",()-> {
+            cloud.upload(verified); eq(cloud.list().size(),1); Path p=folder.resolve("PZCloud-"+verified.id()+".zip"); byte[] old=Files.readAllBytes(p); Files.writeString(p,"different"); fails(()->cloud.upload(verified)); eq(Files.readString(p),"different"); Files.write(p,old);
+        });
+        test("Incomplete folder synchronization is hidden until ZIP arrives",()-> {
+            Path p=folder.resolve("PZCloud-"+verified.id()+".zip"), parked=folder.resolve("arriving.part"); Files.move(p,parked); eq(cloud.list().size(),0); Files.move(parked,p); eq(cloud.list().size(),1);
+        });
+        test("Malformed and conflict-renamed folder metadata is ignored",()-> {
+            Files.writeString(folder.resolve("PZCloud-broken.json"),"{broken"); Files.copy(folder.resolve("PZCloud-"+verified.id()+".json"),folder.resolve("PZCloud-conflicted.json")); eq(cloud.list().size(),1);
+        });
+        test("Damaged synced payload never becomes a published local copy",()-> {
+            Path p=folder.resolve("PZCloud-"+verified.id()+".zip"); byte[] old=Files.readAllBytes(p),bad=old.clone(); bad[bad.length/2]^=1; Files.write(p,bad); Path dest=dir("v2/corrupt-download"); fails(()->cloud.download(remote,dest)); ok(!Files.exists(dest.resolve(verified.id()+".zip"))); Files.write(p,old);
+        });
+        test("Folder copy can pause uploads while manual download remains available",()-> {
+            FolderCloud paused=new FolderCloud(folder,s->{},()->{ throw new IOException("playing"); }); fails(()->paused.upload(verified)); Path p=paused.download(remote,dir("v2/manual-download")); eq(FilesEx.hash(p,"SHA-256"),verified.sha256());
+        });
+        test("Folder backend rejects overlap with internal backup storage",()-> { FolderCloud overlap=new FolderCloud(m.config.archives(),s->{}); fails(()->overlap.upload(verified)); });
+        test("Manual mode schedules no process polling, cloud polling or retry timer",()-> {
+            AtomicInteger probes=new AtomicInteger(); GameGuard counting=new GameGuard() { public boolean running() { probes.incrementAndGet(); return false; } };
+            SaveManager manual=new SaveManager(new Config(dir("v2/idle/app")),counting,fake,s->{}); manual.config.set("zomboid",dir("v2/idle/Zomboid").toString());
+            ScheduledThreadPoolExecutor worker=new ScheduledThreadPoolExecutor(1); CountDownLatch opened=new CountDownLatch(1);
+            try(BackgroundService service=new BackgroundService(manual,worker,opened::countDown,()->{},s->{})) {
+                service.start(); ok(!service.scheduledMonitoring()); ok(!service.scheduledRetry()); eq(probes.get(),0);
+                FilesEx.atomicWrite(manual.config.home.resolve("open.request"),"open"); ok(opened.await(3,TimeUnit.SECONDS)); eq(probes.get(),0);
+            } finally { worker.shutdownNow(); }
+        });
+        test("Automatic polling exists only while protection is enabled",()-> {
+            SaveManager auto=manager("v2/automatic",new Guard(),fake); var w=auto.config.world("Sandbox","World"); w.set("automatic",true); ScheduledThreadPoolExecutor worker=new ScheduledThreadPoolExecutor(1);
+            try(BackgroundService service=new BackgroundService(auto,worker,()->{},()->{},s->{})) {
+                service.start(); ok(service.scheduledMonitoring()); worker.submit(()->{}).get(); w.set("automatic",false); worker.submit(service::settingsChanged).get(); ok(!service.scheduledMonitoring());
+            } finally { worker.shutdownNow(); }
+        });
+        test("Offline retries back off and stop when cloud is disabled",()-> {
+            FakeCloud offline=new FakeCloud(); offline.offline=true; SaveManager pending=manager("v2/retry",new Guard(),offline); pending.config.update(Map.of("cloudMode","folder","syncFolder",dir("v2/retry-dest").toString()));
+            Path p=pending.config.saves().resolve("Sandbox/World"); Files.createDirectories(p); Files.writeString(p.resolve("data"),"queued"); pending.backup(pending.config.world("Sandbox","World"),"manual"); CountDownLatch failed=new CountDownLatch(1); ScheduledThreadPoolExecutor worker=new ScheduledThreadPoolExecutor(1);
+            try(BackgroundService service=new BackgroundService(pending,worker,()->{},()->{},text->{ if(text.contains("offline")) failed.countDown(); })) {
+                service.start(); ok(failed.await(4,TimeUnit.SECONDS)); worker.submit(()->{}).get(); ok(service.scheduledRetry()); eq(pending.pendingCount(),1);
+                pending.config.set("cloudMode","none"); worker.submit(service::settingsChanged).get(); ok(!service.scheduledRetry());
+            } finally { worker.shutdownNow(); }
+        });
+        test("Configuration batches preserve legacy world preferences",()-> {
+            world.update(Map.of("automatic",true,"retention",7,"trigger","after_exit")); Config reloaded=new Config(m.config.home); var w=reloaded.world("Sandbox","World"); ok(w.automatic()); eq(w.retention(),7); eq(w.id(),world.id());
+        });
     }
     // Real HTTP protocol tests follow; no requests leave the loopback interface.
     static void cloudTests() throws Exception {

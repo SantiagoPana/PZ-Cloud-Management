@@ -12,7 +12,9 @@ public final class SessionMonitor {
     private final Consumer<String> log;
     private final Path journal;
     private boolean pending;
-    private long closedSince;
+    private long closedSince,revision;
+    public boolean pendingExit() { return pending; }
+    public long revision() { return revision; }
     private final java.util.function.LongSupplier clock;
     public SessionMonitor(SaveManager manager,Consumer<String> log) throws IOException {
         this(manager,log,System::currentTimeMillis);
@@ -33,7 +35,7 @@ public final class SessionMonitor {
         for(Config.World world:manager.worlds()) {
             if(!world.automatic()||world.get("trigger").equals("before_enter")) continue;
             String fingerprint=manager.engine.fingerprint(world.path());
-            if(!fingerprint.equals(world.get("fingerprint"))) manager.backup(world,"after_exit");
+            if(!fingerprint.equals(world.get("fingerprint"))) { manager.backup(world,"after_exit"); revision++; }
         }
         FilesEx.json(journal,Map.of("pendingExit",false)); pending=false;
     }

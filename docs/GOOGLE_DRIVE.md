@@ -1,6 +1,8 @@
-# Conectar Google Drive
+# Google Drive directo en la 2.0
 
-La aplicación implementa la conexión directa con Google Drive. Necesita un cliente OAuth de escritorio de tu proyecto Google: no se incluyen credenciales ajenas ni un servidor central. El inicio de sesión y el consentimiento se hacen en el navegador del usuario.
+Para usar una carpeta que tu aplicación Drive/OneDrive ya sincroniza, elegila en Configuración; ese modo no necesita estos pasos.
+
+Esta guía corresponde a la conexión directa con Google Drive. Necesita un cliente OAuth de escritorio de tu proyecto Google: no se incluyen credenciales ajenas ni un servidor central. El inicio de sesión y el consentimiento se hacen en el navegador del usuario.
 
 ## Configuración inicial (una vez por proyecto)
 
@@ -9,14 +11,14 @@ La aplicación implementa la conexión directa con Google Drive. Necesita un cli
 3. En Google Auth Platform configurá el nombre de la aplicación y los datos de contacto. Para una cuenta personal, usá audiencia externa. Si está en modo de prueba, agregá tu cuenta como usuario de prueba.
 4. El único permiso que solicita el programa es `https://www.googleapis.com/auth/drive.appdata`. Si la consola pide configurar acceso a datos, agregá ese permiso.
 5. En **Clients / Clientes**, creá un cliente de tipo **Desktop app / Aplicación de escritorio**. Descargá el JSON.
-6. En el gestor: **Configuración → 1. Importar JSON OAuth… → 2. Conectar cuenta**. Elegí tu cuenta en el navegador y autorizá el permiso.
-7. Al volver al gestor debe verse **Google Drive conectado**. Creá un respaldo con destino Drive o ambos y actualizá la nube.
+6. En el gestor: **Configuración → Conectar Google…**. La primera vez te pide el archivo de conexión JSON. Elegí tu cuenta en el navegador y autorizá el permiso.
+7. Al volver al gestor debe verse **Google Drive conectado**. Elegí Google Drive directo en Configuración, guardá una partida y buscala en Recuperar partida.
 
 Importá el mismo JSON y conectá la misma cuenta en la segunda PC. La identidad de aplicación/proyecto y la cuenta deben coincidir para acceder a los mismos respaldos.
 
 ## Dónde aparecen las partidas
 
-Se guardan en `appDataFolder`, el espacio privado de la aplicación en tu cuenta. Las versiones se ven en la pestaña Google Drive del gestor; no aparecen como una carpeta común en la web de Drive. Consumen almacenamiento de la cuenta. Revocar acceso o borrar los datos de la aplicación desde Google puede impedir el acceso o eliminar esos datos; conservá exportaciones locales de las copias que necesites aparte.
+Se guardan en `appDataFolder`, el espacio privado de la aplicación en tu cuenta. Las versiones se ven en la vista **Recuperar partida → En mi carpeta / nube** del gestor; no aparecen como una carpeta común en la web de Drive. Consumen almacenamiento de la cuenta. Revocar acceso o borrar los datos de la aplicación desde Google puede impedir el acceso o eliminar esos datos; conservá exportaciones locales de las copias que necesites aparte.
 
 ## Sesión y errores habituales
 

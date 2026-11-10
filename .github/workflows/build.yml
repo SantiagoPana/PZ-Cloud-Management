@@ -26,6 +26,19 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./scripts/test.ps1
+      - name: User-flow UI test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: java -Xms8m -Xmx768m -XX:+UseSerialGC -cp "build/classes;build/test-classes" pzcloud.UiSmoke
+      - name: UI screenshots
+        if: runner.os == 'Windows' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PZCloud-2.0-UI
+          path: |
+            build/ui-smoke.png
+            build/ui-v2-recover.png
+          if-no-files-found: ignore
       - name: Integration tests (Linux)
         if: runner.os == 'Linux'
         run: bash scripts/test.sh
@@ -45,7 +58,7 @@ jobs:
         run: ./scripts/build.ps1 -Package
       - uses: actions/upload-artifact@v4
         with:
-          name: PZCloudManagement-Windows-x64
+          name: PZCloudManagement-2.0-Windows-x64
           path: build/portable/PZCloudManagement/
           if-no-files-found: error
           retention-days: 30

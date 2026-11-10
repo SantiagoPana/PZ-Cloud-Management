@@ -1,55 +1,63 @@
-# PZ Cloud Management
+# PZ Cloud 2.0
 
-Gestor de partidas de **Project Zomboid Build 42** para Windows, con aplicación de escritorio, respaldos locales y sincronización con Google Drive. Autor: Santiago Martin.
+**Guardá tu partida. Recuperala en otra PC.** Aplicación de escritorio en español para partidas de un jugador de Project Zomboid B42. Autor: Santiago Martin.
 
-**1.0.0-alpha.1 — sistema implementado y probado con partidas ficticias.** La conexión con una cuenta real de Drive, la carga de partidas reales y el menú Lua en B42.22.1 todavía requieren una prueba en el juego. Trabajo en `development`; `main` conserva la base anterior.
+## Empezar
 
-## Qué permite hacer
+Descargá `PZCloudManagement-2.0-Windows-x64` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
 
-- Descubrir partidas de un jugador y elegir cuáles proteger.
-- Crear versiones manuales o automáticas; elegir solo local, Google Drive o ambos.
-- Ver todos los puntos de guardado de Drive, descargarlos en otra PC y restaurar la versión elegida.
-- Mantener las subidas pendientes sin Internet y continuarlas después, incluso tras reiniciar el gestor.
-- Continuar subidas y descargas grandes por bloques sin cargarlas completas en memoria.
-- Verificar SHA-256 de cada archivo y del ZIP, detectar cambios durante la copia y rechazar archivos dañados.
-- Respaldar el progreso actual antes de restaurar y conservar además la carpeta anterior para recuperación.
-- Conservar versiones de PCs distintas sin sobrescribirlas; señalar historias divergentes.
-- Importar/exportar respaldos y consultar/descargar desde el botón opcional **Cloud Saves** del juego.
+1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o tu conexión **Google Drive directo**.
+2. Elegí la partida y pulsá **Guardar partida**. Activá **Guardar automáticamente al cerrar Zomboid** si querés protección automática.
+3. En otra PC, configurá la misma carpeta/cuenta y usá **Recuperar partida → En mi carpeta / nube**.
 
-## Empezar en Windows
+El modo carpeta no necesita crear un proyecto de Google ni importar credenciales. Tu aplicación de sincronización debe terminar de subir los archivos antes de cambiar de PC. El gestor muestra **En tu carpeta**, no asegura una subida que depende de otra aplicación. [Guía sencilla](docs/QUICKSTART.md).
 
-**Desde el código:** en GitHub Desktop elegí `development`, hacé **Fetch origin → Pull origin**. Instalá JDK 21 una vez (`winget install Microsoft.OpenJDK.21`), abrí una terminal nueva y ejecutá **Start-PZCloud.cmd**. Compila y abre el gestor.
+## Qué cambió en la 2.0
 
-**Portable:** cuando termine el workflow **Test and package** de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), descargá el artifact `PZCloudManagement-Windows-x64`, extraelo completo y abrí `PZCloudManagement.exe`. Ese paquete incluye Java; no hace falta instalarlo.
+- Dos tareas principales: **Guardar partida** y **Recuperar partida**.
+- Configuración inicial guiada y preferencias sensatas; las herramientas técnicas quedan en Más opciones.
+- Recuperación con otro nombre por defecto; respaldo previo si elegís reemplazar un mundo existente.
+- Catálogo pequeño: ver versiones no descomprime los ZIP.
+- Modo manual sin temporizadores de procesos ni consultas periódicas de nube.
+- Protección automática con consultas cada 15 segundos y un proceso ya identificado reutilizado.
+- Solo se reintenta si hay copias pendientes. Los fallos espacian los reintentos de 30 segundos hasta 10 minutos.
+- Subidas propias pausables al detectar que abriste el juego; no se copian mundos abiertos.
+- Lecturas con buffers reutilizados; SHA-256 y MD5 se calculan juntos.
+- Clientes HTTP creados solo cuando se necesitan y compartidos para Google.
+- Runtime portable comprimido, heap inicial pequeño y un solo trabajador de baja prioridad.
 
-En **Configuración**, revisá la carpeta `Zomboid` y seguí [la conexión de Google Drive](docs/GOOGLE_DRIVE.md). En la segunda PC importá el mismo cliente OAuth y conectá la misma cuenta. [Guía completa de uso](docs/QUICKSTART.md).
+## Consumo medido
 
-## Cuándo se respalda
+En una prueba de Linux con OpenJDK 21, mismas partidas ficticias y configuración de lanzamiento de cada versión:
 
-| Opción | Comportamiento |
-| --- | --- |
-| Manual | Botón **Respaldar ahora**, con el juego completamente cerrado |
-| Al abrir desde el gestor | **Respaldar y abrir Zomboid** hace la copia antes de pedir a Steam que abra el juego |
-| Al cerrar Zomboid | El gestor detecta el fin del proceso, espera 10 segundos y respalda las partidas protegidas que cambiaron |
-| Ambos | Combina los dos momentos anteriores |
+| Medición | 1.0 | 2.0 |
+| --- | --- | --- |
+| RAM residente al final de 15 s en reposo con la ventana abierta | 111.8 MiB | 82.1 MiB |
+| Lecturas durante ese reposo | 240 | 0 |
+| Tiempo para 50 consultas del historial | 846 ms | 23 ms |
+| Bytes leídos en esas 50 consultas | 19.98 MB | 92.66 KB |
 
-El gestor debe permanecer abierto o en segundo plano. Abrir Zomboid directamente desde Steam permite el respaldo de salida; no puede garantizar una copia previa al inicio de esa sesión. Volver al menú del juego mantiene el proceso abierto: la copia automática espera el cierre completo.
+Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC. Copiar/restaurar partidas grandes necesita más recursos temporalmente. Los clientes externos de Drive/OneDrive tienen su propio consumo. [Metodología, límites y resultados completos](docs/PERFORMANCE.md).
 
-## Alcance
+## Compatibilidad y estado
 
-Partidas de un jugador. No incluye servidores dedicados, mundos alojados multijugador, Steam Cloud, copias de un mundo en ejecución ni instalación automática de mods de Workshop. Las dos PCs necesitan builds y mods compatibles. La build mostrada en los respaldos es la declarada en Configuración.
+**2.0.0-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
 
-La aplicación Java funciona como proceso externo. El mod Lua es opcional; no se requiere ZombieBuddy ni modificar archivos Java del juego.
+66 pruebas automáticas con mundos ficticios y simulador HTTP local, más una prueba gráfica que hace clic en configurar, guardar y recuperar. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
 
-## Desarrollo y pruebas
+Solo un jugador; no servidores dedicados ni partidas multijugador alojadas. Usá las mismas builds y mods para cargar una copia en otra PC. Volver al menú no cierra el proceso: el respaldo automático espera a salir completamente de Zomboid.
 
-JDK 17+; sin Maven, Gradle ni dependencias de ejecución externas.
+Cuando cerrás la ventana, el gestor sigue en bandeja si hay protección automática o envíos pendientes configurados. **Salir** en la bandeja lo detiene por completo. Sin ese trabajo pendiente, cerrar la ventana termina la aplicación.
+
+## Desde el código
+
+JDK 17+ para compilar el JAR; JDK 21 para el portable comprimido. Rama de trabajo `development`.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build.ps1 -Package
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 ```
 
-Linux/macOS: `bash scripts/test.sh`; abrir con `java -jar build/PZCloudManagement.jar`. Windows es el destino principal; el empaquetado portable se hace en Windows.
+`Start-PZCloud.cmd` compila y abre. Linux: `bash scripts/test.sh`; abrir con `java -Xms8m -XX:+UseSerialGC -jar build/PZCloudManagement.jar`.
 
-La suite usa carpetas temporales y un simulador HTTP local de Google OAuth/Drive: no abre partidas reales ni solicita una cuenta. Ver [pruebas](docs/TEST_PLAN.md), [arquitectura](docs/ARCHITECTURE.md), [formato](docs/FORMAT.md), [privacidad](docs/PRIVACY.md) y [estado de la versión](docs/ROADMAP.md).
+[Arquitectura](docs/ARCHITECTURE.md) · [Formato](docs/FORMAT.md) · [Google directo](docs/GOOGLE_DRIVE.md) · [Pruebas](docs/TEST_PLAN.md) · [Privacidad](docs/PRIVACY.md).

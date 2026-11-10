@@ -19,7 +19,7 @@ if ($Package) {
     New-Item -ItemType Directory -Force -Path $taskInput | Out-Null
     Copy-Item -LiteralPath $taskJar -Destination $taskInput -Force
     if (Test-Path $taskPortable) { Remove-Item -LiteralPath $taskPortable -Recurse -Force }
-    & jpackage --type app-image --name PZCloudManagement --input $taskInput --main-jar PZCloudManagement.jar --main-class pzcloud.PzCloudApp --dest $taskPortable --app-version 1.0.0 --vendor 'Santiago Martin' --description 'Partidas y respaldos de Project Zomboid en Google Drive' --add-modules 'java.base,java.desktop,java.net.http,jdk.httpserver,jdk.crypto.ec,java.logging'
+    & jpackage --type app-image --name PZCloudManagement --input $taskInput --main-jar PZCloudManagement.jar --main-class pzcloud.PzCloudApp --dest $taskPortable --app-version 2.0.0 --vendor 'Santiago Martin' --description 'Partidas y respaldos de Project Zomboid en Google Drive' --add-modules 'java.base,java.desktop,java.net.http,jdk.httpserver,jdk.crypto.ec,java.logging' --jlink-options '--strip-debug --strip-native-commands --no-header-files --no-man-pages --compress=zip-6' --java-options '-Xms8m' --java-options '-Xmx768m' --java-options '-XX:+UseSerialGC' --java-options '-XX:MinHeapFreeRatio=10' --java-options '-XX:MaxHeapFreeRatio=20'
     if ($LASTEXITCODE -ne 0) { throw 'Fallo el paquete portable.' }
     $taskApp = Join-Path $taskPortable 'PZCloudManagement'
     Copy-Item -LiteralPath (Join-Path $taskRepo 'README.md') -Destination $taskApp

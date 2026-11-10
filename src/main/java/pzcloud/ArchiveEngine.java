@@ -17,7 +17,8 @@ public final class ArchiveEngine {
     private final GameGuard guard;
     private final Consumer<String> progress;
     public ArchiveEngine(GameGuard guard, Consumer<String> progress) { this.guard=guard; this.progress=progress; }
-    public record Snapshot(Path archive, Map<String,Object> manifest, String sha256, long bytes) {
+    public record Snapshot(Path archive, Map<String,Object> manifest, String sha256, long bytes, String md5) {
+        public Snapshot(Path archive,Map<String,Object> manifest,String sha256,long bytes) { this(archive,manifest,sha256,bytes,""); }
         public String get(String key) { return Json.str(manifest,key); }
         public String id() { return get("snapshotId"); }
         public String toString() { return get("createdAt").replace('T',' ').replace("Z","")+" · "+get("reason")+" · "+FilesEx.human(bytes); }
@@ -27,10 +28,11 @@ public final class ArchiveEngine {
     }
     private record Scan(List<Item> files, List<String> directories, long total, String fingerprint) {}
     private Scan scan(Path root) throws IOException {
+        TransferGate gate=TransferGate.whileGameClosed(guard);
         List<Item> files=new ArrayList<>(); List<String> dirs=new ArrayList<>(); Set<String> names=new HashSet<>(); long total=0;
         try(var walk=Files.walk(root)) {
             for(Path p:walk.sorted().toList()) {
-                if(p.equals(root)) continue;
+                if(p.equals(root)) continue; gate.check();
                 String name=root.relativize(p).toString().replace('\\','/'); FilesEx.safeRelative(name);
                 if(!names.add(name.toLowerCase(Locale.ROOT))) throw new IOException("Archivos que solo difieren en mayúsculas: "+name);
                 BasicFileAttributes a=Files.readAttributes(p,BasicFileAttributes.class,LinkOption.NOFOLLOW_LINKS);
@@ -66,14 +68,14 @@ public final class ArchiveEngine {
             try(ZipOutputStream zip=new ZipOutputStream(new BufferedOutputStream(Files.newOutputStream(temp)))) {
                 zip.setLevel(1); zip.putNextEntry(new ZipEntry(MANIFEST)); zip.write(Json.encode(manifest).getBytes(StandardCharsets.UTF_8)); zip.closeEntry();
                 for(String dir:before.directories) { zip.putNextEntry(new ZipEntry("save/"+dir+"/")); zip.closeEntry(); }
-                int count=0;
+                int count=0; TransferGate gate=TransferGate.whileGameClosed(guard);
                 for(Item item:before.files) {
                     if((count++%250)==0) progress.accept("Comprimiendo "+count+" / "+before.files.size()+" archivos…");
                     ZipEntry entry=new ZipEntry("save/"+item.path); entry.setTime(item.modified); zip.putNextEntry(entry);
                     MessageDigest d=FilesEx.digest("SHA-256"); long n=0;
                     try(InputStream in=Files.newInputStream(root.resolve(item.path))) {
-                        byte[] b=new byte[128*1024]; int read;
-                        while((read=in.read(b))!=-1) { n+=read; d.update(b,0,read); zip.write(b,0,read); }
+                        byte[] b=FilesEx.buffer(); int read;
+                        while((read=in.read(b))!=-1) { gate.check(); n+=read; d.update(b,0,read); zip.write(b,0,read); }
                     }
                     zip.closeEntry();
                     if(n!=item.size || !HexFormat.of().formatHex(d.digest()).equals(item.sha256)) throw new IOException("La partida cambió durante el respaldo. Volvé a intentarlo con el juego cerrado.");
@@ -84,7 +86,7 @@ public final class ArchiveEngine {
             Snapshot verified=verify(temp,null);
             try(var channel=java.nio.channels.FileChannel.open(temp,StandardOpenOption.WRITE)) { channel.force(true); }
             FilesEx.move(temp,output,false);
-            return new Snapshot(output,verified.manifest,verified.sha256,verified.bytes);
+            return new Snapshot(output,verified.manifest,verified.sha256,verified.bytes,verified.md5);
         } finally { Files.deleteIfExists(temp); }
     }
     public Snapshot inspect(Path archive) throws IOException {
@@ -102,7 +104,7 @@ public final class ArchiveEngine {
     }
     public Snapshot verify(Path archive, String expectedSha) throws IOException { return extract(archive,null,expectedSha); }
     private Snapshot extract(Path archive, Path output, String expectedSha) throws IOException {
-        progress.accept("Verificando integridad del respaldo…"); String sha=FilesEx.hash(archive,"SHA-256");
+        progress.accept("Verificando integridad del respaldo…"); FilesEx.Hashes hashes=FilesEx.hashes(archive); String sha=hashes.sha256();
         if(expectedSha!=null && !expectedSha.isBlank() && !sha.equals(expectedSha)) throw new IOException("El SHA-256 del respaldo no coincide. Descarga dañada.");
         Snapshot snap=inspect(archive); Map<String,Object> m=snap.manifest; List<Object> entries=Json.array(m.get("files"));
         if(entries.isEmpty()||entries.size()>2_000_000) throw new IOException("Lista de archivos inválida.");
@@ -140,7 +142,7 @@ public final class ArchiveEngine {
                 MessageDigest d=FilesEx.digest("SHA-256"); CRC32 crc=new CRC32(); long count=0; OutputStream target=OutputStream.nullOutputStream();
                 if(output!=null) { Path p=output.resolve(rel); Files.createDirectories(p.getParent()); target=Files.newOutputStream(p,StandardOpenOption.CREATE_NEW); }
                 try(InputStream in=zip.getInputStream(entry); OutputStream out=target) {
-                    byte[] b=new byte[128*1024]; int n;
+                    byte[] b=FilesEx.buffer(); int n;
                     while((n=in.read(b))!=-1) { if(count>size-n) throw new IOException("Contenido expandido mayor que el declarado."); count+=n; d.update(b,0,n); crc.update(b,0,n); out.write(b,0,n); }
                 }
                 if(count!=size||crc.getValue()!=entry.getCrc()||!HexFormat.of().formatHex(d.digest()).equals(Json.str(f,"sha256"))) throw new IOException("Respaldo corrupto: "+rel);
@@ -148,7 +150,7 @@ public final class ArchiveEngine {
             }
             if(seen.size()!=expected.size()+dirs.size()+1) throw new IOException("Faltan archivos o directorios en el ZIP.");
         }
-        return new Snapshot(archive,m,sha,snap.bytes);
+        return new Snapshot(archive,m,sha,snap.bytes,hashes.md5());
     }
     public record RestoreResult(Path target, Path previous, Path journal) {}
     public RestoreResult restore(Path archive, Path savesRoot, String mode, String name, String expectedSha) throws IOException {

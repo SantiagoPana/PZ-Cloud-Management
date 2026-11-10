@@ -6,7 +6,7 @@ Windows usa `%LOCALAPPDATA%\PZCloudManagement`; POSIX usa `~/.pzcloud`. `-Dpzclo
 | --- | --- |
 | `config.json` | Carpeta Zomboid, build declarada, equipo y opciones por modo/nombre de partida |
 | `backups/<snapshotId>.zip` | Versión completa e inmutable del mundo |
-| `backups/<snapshotId>.meta.json` | SHA-256, estado local/pendiente/sincronizado, ID remoto y último error |
+| `backups/<snapshotId>.meta.json` | SHA-256/MD5, resumen compacto del manifiesto, bytes, estado local/pendiente/sincronizado/carpeta, ID remoto y último error |
 | `sessions/<snapshotId>.json` | ID de Drive preasignado y URI de subida mientras está pendiente |
 | `google-client.json` | Cliente OAuth de escritorio importado |
 | `google-session.token` | Tokens de sesión; DPAPI CurrentUser en Windows, permisos 0600 en POSIX |
@@ -30,3 +30,11 @@ Si el sistema se interrumpe entre movimientos, arrancar el gestor con el juego c
 ## Protocolo Lua
 
 En `Zomboid/Lua/`: `pzcloud-request.txt` con `1|nonce|OPEN`, `1|nonce|LIST` o `1|nonce|DOWNLOAD|fileId`; `pzcloud-status.txt` con respuesta al mismo nonce; `pzcloud-catalog.txt` con filas `fileId|nombre|modo|fecha|equipo|tamaño`. No hay comando de restauración, ruta de destino ni ejecución de comandos. Los nonces procesados persisten para evitar repetir una solicitud al reiniciar el gestor.
+
+## Cambios compatibles de la 2.0
+
+El ZIP sigue siendo schema 1. Los JSON laterales agregan `summary`, `bytes` y `md5`; los anteriores se migran una vez sin modificar el ZIP. `summary` no incluye listas de archivos/directorios. `folder` significa copia entregada a una carpeta local; no confirma el estado de un servicio externo.
+
+`config.json` agrega `cloudMode` (`none`, `folder`, `drive`), `syncFolder` y `setupComplete`. Al detectar un cliente OAuth anterior conserva el modo directo. La configuración de mundos y los identificadores se conservan.
+
+El modo carpeta publica `PZCloud-<snapshotId>.zip` y `PZCloud-<snapshotId>.json` en el destino; el segundo incluye metadatos de presentación y SHA-256. El catálogo ignora marcadores incompletos, renombrados por conflictos o sin un ZIP del tamaño esperado.

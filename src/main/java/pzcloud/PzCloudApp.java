@@ -39,7 +39,8 @@ public final class PzCloudApp {
         };
         SaveManager manager=new SaveManager(new Config(home),log);
         if(args.length==0||args[0].equals("gui")) {
-            ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor(r->new Thread(r,"pzcloud-worker"));
+            ScheduledThreadPoolExecutor worker=new ScheduledThreadPoolExecutor(1,r->{ Thread t=new Thread(r,"pzcloud-worker"); t.setPriority(Thread.MIN_PRIORITY); return t; });
+            worker.setRemoveOnCancelPolicy(true); worker.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
             SwingUtilities.invokeAndWait(()-> {
                 try { ManagerWindow ui=new ManagerWindow(manager,worker); window.set(ui); ui.setVisible(true); }
                 catch(IOException ex) { worker.shutdownNow(); throw new UncheckedIOException(ex); }
@@ -63,7 +64,7 @@ public final class PzCloudApp {
                 manager.restore(local,local.snapshot().get("mode"),args[2],Arrays.asList(args).contains("--replace"));
             }
             case "login" -> {
-                if(args.length>1) manager.auth.importClient(Path.of(args[1])); manager.auth.connect(ManagerWindow::openBrowser); System.out.println("Google Drive conectado.");
+                if(args.length>1) manager.auth.importClient(Path.of(args[1])); manager.auth.connect(ManagerWindow::openBrowser); manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); System.out.println("Google Drive conectado.");
             }
             case "logout" -> manager.auth.disconnect();
             case "recover" -> manager.engine.recover(manager.config.saves());

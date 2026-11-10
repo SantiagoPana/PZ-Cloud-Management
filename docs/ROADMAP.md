@@ -1,27 +1,22 @@
-# Estado 1.0.0-alpha.1
+# Estado 2.0.0-alpha.1
 
-## Implementado
+## Implementado y probado
 
-- [x] Aplicación de escritorio y CLI.
-- [x] Identificación de mundos, preferencias por partida y modos manual/automático.
-- [x] Snapshots con SHA-256, CRC, detección de cambios y publicación temporal.
-- [x] Restauración con respaldo previo, staging, journal y recuperación.
-- [x] Cola durable, retención, importación/exportación y una instancia por equipo.
-- [x] Detección de cierre del proceso y respaldo previo al lanzamiento desde el gestor.
-- [x] Google OAuth PKCE/state/loopback, renovación y almacenamiento de sesión.
-- [x] Drive real mediante API: listar, subir, reanudar, descargar y eliminar versiones.
-- [x] Historiales divergentes sin sobrescritura automática.
-- [x] Mod Lua opcional y traducciones EN/ES.
-- [x] Suite de integración, build reproducible y workflow de portable Windows.
+- [x] Interfaz con dos acciones principales y configuración sencilla.
+- [x] Copias locales, carpeta sincronizada y Google Drive directo.
+- [x] Historial compacto y migración desde los respaldos de la 1.0.
+- [x] Trabajo por eventos, reposo manual sin sondeos y reintentos con espera creciente.
+- [x] Buffers reutilizados, dos hashes en una lectura y clientes HTTP diferidos.
+- [x] Cola durable, transferencias reanudables, restauración con respaldo previo y recuperación de interrupciones.
+- [x] 66 pruebas de integración y flujo gráfico de configurar/guardar/recuperar.
+- [x] Comparación reproducible de consumo con la 1.0.
+- [x] Workflow de Windows/Linux y portable Windows con Java comprimido.
 
-## Validaciones pendientes para una versión estable
+## Validación externa pendiente
 
-- [ ] Conectar una cuenta Google real con su cliente OAuth y completar ida/vuelta entre dos PCs.
-- [ ] Cargar una partida descartable restaurada dentro de B42.22.1.
-- [ ] Validar botón y panel Lua con el menú de la build objetivo y otros mods de menú.
-- [ ] Probar procesos, suspensión, Steam y cierre abrupto en el Windows 11 del usuario.
-- [ ] Medir partidas grandes reales, discos lentos y cuota de Drive.
+- [ ] Sincronización real con Drive/OneDrive y conexión OAuth real.
+- [ ] Cargar una copia restaurada en B42.22.1 con sus mods.
+- [ ] Probar el menú Lua con otros mods en el Windows 11 del usuario.
+- [ ] Sesiones largas, suspensión y partidas reales muy grandes.
 
-## Mejoras futuras
-
-Respaldos incrementales/deduplicación, más proveedores y soporte específico de servidores. No forman parte de esta versión.
+Incrementales, proveedores adicionales y servidores siguen fuera del alcance de esta versión.

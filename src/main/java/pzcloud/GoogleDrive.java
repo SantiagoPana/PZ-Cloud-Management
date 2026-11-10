@@ -17,11 +17,16 @@ public final class GoogleDrive implements CloudProvider {
     private final Path sessions;
     private final Consumer<String> progress;
     private final java.util.function.Supplier<String> connection;
-    private final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build();
+    private TransferGate gate=TransferGate.unrestricted();
+    private HttpClient http;
+    private synchronized HttpClient http() { if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build(); return http; }
     private static final int CHUNK=4*1024*1024;
     private static final String FIELDS="id,name,size,md5Checksum,appProperties";
     public GoogleDrive(GoogleAuth auth,Path home,Consumer<String> progress) throws IOException {
-        this(auth::accessToken,URI.create("https://www.googleapis.com/drive/v3/"),URI.create("https://www.googleapis.com/upload/drive/v3/"),home.resolve("sessions"),progress,auth::connectionId);
+        this(auth::accessToken,URI.create("https://www.googleapis.com/drive/v3/"),URI.create("https://www.googleapis.com/upload/drive/v3/"),home.resolve("sessions"),progress,auth::connectionId); this.http=auth.http();
+    }
+    public GoogleDrive(GoogleAuth auth,Path home,Consumer<String> progress,TransferGate gate) throws IOException {
+        this(auth,home,progress); this.gate=gate;
     }
     GoogleDrive(Tokens tokens,URI api,URI uploadApi,Path sessions,Consumer<String> progress) throws IOException {
         this(tokens,api,uploadApi,sessions,progress,()->"test-connection");
@@ -39,8 +44,8 @@ public final class GoogleDrive implements CloudProvider {
     }
     private HttpResponse<byte[]> call(URI uri,String method,Map<String,String> headers,HttpRequest.BodyPublisher body) throws IOException {
         try {
-            HttpResponse<byte[]> response=http.send(request(uri,method,headers,body,false),HttpResponse.BodyHandlers.ofByteArray());
-            if(response.statusCode()==401) response=http.send(request(uri,method,headers,body,true),HttpResponse.BodyHandlers.ofByteArray());
+            HttpResponse<byte[]> response=http().send(request(uri,method,headers,body,false),HttpResponse.BodyHandlers.ofByteArray());
+            if(response.statusCode()==401) response=http().send(request(uri,method,headers,body,true),HttpResponse.BodyHandlers.ofByteArray());
             if(response.body().length>2*1024*1024) throw new IOException("Respuesta de Drive demasiado grande."); return response;
         } catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Transferencia cancelada.",e); }
     }
@@ -74,8 +79,8 @@ public final class GoogleDrive implements CloudProvider {
         return res.statusCode()==404?null:remote(json(res));
     }
     public Remote upload(ArchiveEngine.Snapshot snap) throws IOException {
-        UUID.fromString(snap.id()); String md5=FilesEx.hash(snap.archive(),"MD5");
-        if(!FilesEx.hash(snap.archive(),"SHA-256").equals(snap.sha256())) throw new IOException("El respaldo local cambió antes de subirlo.");
+        gate.check(); UUID.fromString(snap.id()); String md5=snap.md5().isBlank()?FilesEx.hash(snap.archive(),"MD5"):snap.md5();
+        if(Files.size(snap.archive())!=snap.bytes()||(snap.md5().isBlank()&&!FilesEx.hash(snap.archive(),"SHA-256").equals(snap.sha256()))) throw new IOException("El respaldo local cambió antes de subirlo.");
         Path stateFile=sessions.resolve(snap.id()+".json");
         Map<String,Object> state=Files.exists(stateFile)?FilesEx.readJson(stateFile):new LinkedHashMap<>();
         String connectionId=connection.get();
@@ -113,6 +118,7 @@ public final class GoogleDrive implements CloudProvider {
         try(RandomAccessFile in=new RandomAccessFile(snap.archive().toFile(),"r")) {
             int stalled=0;
             while(offset<snap.bytes()) {
+                gate.check();
                 int length=(int)Math.min(CHUNK,snap.bytes()-offset); byte[] bytes=new byte[length]; in.seek(offset); in.readFully(bytes);
                 progress.accept("Subiendo a Google Drive: "+(100*offset/snap.bytes())+"% · "+FilesEx.human(offset)+" / "+FilesEx.human(snap.bytes()));
                 HttpResponse<byte[]> res=call(URI.create(session),"PUT",Map.of("Content-Type","application/zip","Content-Range","bytes "+offset+"-"+(offset+length-1)+"/"+snap.bytes()),HttpRequest.BodyPublishers.ofByteArray(bytes));
@@ -162,8 +168,8 @@ public final class GoogleDrive implements CloudProvider {
                 long end=Math.min(r.bytes()-1,position+CHUNK-1); progress.accept("Descargando de Drive: "+100*position/r.bytes()+"%");
                 HttpResponse<Path> res;
                 try {
-                    res=http.send(request(fileUri(r.fileId(),"?alt=media"),"GET",Map.of("Range","bytes="+position+"-"+end),HttpRequest.BodyPublishers.noBody(),false),HttpResponse.BodyHandlers.ofFile(chunk,StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING));
-                    if(res.statusCode()==401) res=http.send(request(fileUri(r.fileId(),"?alt=media"),"GET",Map.of("Range","bytes="+position+"-"+end),HttpRequest.BodyPublishers.noBody(),true),HttpResponse.BodyHandlers.ofFile(chunk,StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING));
+                    res=http().send(request(fileUri(r.fileId(),"?alt=media"),"GET",Map.of("Range","bytes="+position+"-"+end),HttpRequest.BodyPublishers.noBody(),false),HttpResponse.BodyHandlers.ofFile(chunk,StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING));
+                    if(res.statusCode()==401) res=http().send(request(fileUri(r.fileId(),"?alt=media"),"GET",Map.of("Range","bytes="+position+"-"+end),HttpRequest.BodyPublishers.noBody(),true),HttpResponse.BodyHandlers.ofFile(chunk,StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING));
                 } catch(InterruptedException e) { Thread.currentThread().interrupt(); throw new IOException("Descarga cancelada.",e); }
                 check(res); long length=Files.size(chunk);
                 if(res.statusCode()==200) {

@@ -10,6 +10,7 @@ public interface CloudProvider {
         public String id() { return get("snapshot"); }
         public String toString() { return get("saveName")+" · "+get("mode")+" · "+get("created")+" · "+get("device")+" · "+FilesEx.human(bytes); }
     }
+    default String deliveredStatus() { return "synced"; }
     List<Remote> list() throws IOException;
     Remote upload(ArchiveEngine.Snapshot snapshot) throws IOException;
     Path download(Remote remote,Path directory) throws IOException;

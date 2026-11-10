@@ -1,13 +1,11 @@
-# Primera prueba en Windows
+# Probar la 2.0 en Windows
 
-1. En GitHub Desktop, seleccionar `SantiagoPana/PZ-Cloud-Management` y rama `development`; Fetch origin → Pull origin.
-2. Instalar JDK 21 si hace falta: `winget install Microsoft.OpenJDK.21`. Abrir una terminal nueva después.
-3. Ejecutar `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1` en el repositorio. Usa mundos ficticios en TEMP y HTTP local. Resultado: `OK: 50 integration tests`.
-4. Abrir `Start-PZCloud.cmd`; seleccionar la carpeta correcta de Zomboid en Configuración.
-5. Crear una partida descartable, cerrar el juego y usar Respaldar ahora. La copia debe aparecer en el historial.
-6. Seguir [GOOGLE_DRIVE.md](GOOGLE_DRIVE.md) para conectar la cuenta. Subir, actualizar nube y descargar en la segunda PC.
-7. Restaurar con un nombre nuevo, abrir PZ y probar que carga.
+1. Descargá `PZCloudManagement-2.0-Windows-x64` de un workflow correcto de Actions y extraelo completo.
+2. Abrí **PZCloudManagement.exe**. No hace falta instalar Java.
+3. Elegí **Solo en esta PC** para la primera prueba. Seleccioná una partida descartable y cerrá Zomboid.
+4. **Guardar partida** debe crear una copia. En **Recuperar partida → En esta PC**, elegila y recuperala con un nombre nuevo.
+5. Abrí PZ y comprobá que carga. Después configurá la nube y probá el recorrido con otra PC.
 
-Si se usa el portable de Actions, Java ya viene incluido. La suite desde el código requiere JDK; el portable solo requiere extraer su carpeta completa.
+Desde GitHub Desktop: `development` → Fetch origin → Pull origin. Si ejecutás desde el código, instalá JDK 21 y abrí `Start-PZCloud.cmd`. `scripts/test.ps1` ejecuta las 66 pruebas sin tocar partidas reales ni conectar una cuenta.
 
-La rama `main` conserva la base anterior. No instalar la aplicación ni el JAR dentro de los archivos del juego. El botón Lua se instala desde Configuración si se desea.
+La prueba gráfica del workflow usa mundos ficticios: selecciona configuración, guarda y recupera haciendo clic en los controles reales.

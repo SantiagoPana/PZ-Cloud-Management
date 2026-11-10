@@ -13,4 +13,4 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "" javaw.exe -jar "%~dp0build\PZCloudManagement.jar"
+start "" javaw.exe -Xms8m -Xmx768m -XX:+UseSerialGC -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -jar "%~dp0build\PZCloudManagement.jar"
