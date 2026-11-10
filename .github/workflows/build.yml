@@ -8,6 +8,26 @@ on:
 permissions:
   contents: read
 jobs:
+  workshop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install Lua 5.1 for the isolated mod tests
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install --yes lua5.1
+      - name: Test translations, UI states and protocol compatibility
+        run: python3 scripts/test-mod.py
+      - name: Package Workshop upload folder
+        run: python3 scripts/package-workshop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PZCloudManagement-Workshop-2.3.2
+          path: build/workshop/PZCloudManagement-Workshop-2.3.2.zip
+          if-no-files-found: error
+          retention-days: 30
   test:
     strategy:
       fail-fast: false
@@ -56,7 +76,7 @@ jobs:
         if: runner.os == 'Linux'
         run: java -Djava.awt.headless=true -cp build/PZCloudManagement.jar:build/test-classes pzcloud.BundledClientSmoke --consumer
   windows-portable:
-    needs: test
+    needs: [test, workshop]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6

@@ -12,7 +12,7 @@ Las herramientas de compilación y su configuración son para el desarrollador y
 
 ## Empezar
 
-Descargá `PZCloudManagement-2.3.1-Windows-Google` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
+**[Descargar PZ Cloud 2.3.1 para Windows — Google incluido](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/download/v2.3.1/PZCloudManagement-2.3.1-Windows-Google.zip)**. Extraé toda la carpeta y abrí **PZCloudManagement.exe**. Java viene incluido. [Notas de la versión](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1).
 
 1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o **Google Drive directo** si tu edición ya lo trae habilitado.
 2. Elegí la partida y pulsá **Guardar partida**. Activá **Guardar automáticamente al cerrar Zomboid** si querés protección automática.
@@ -73,6 +73,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 [Arquitectura](docs/ARCHITECTURE.md) · [Formato](docs/FORMAT.md) · [Google directo](docs/GOOGLE_DRIVE.md) · [Pruebas](docs/TEST_PLAN.md) · [Privacidad](docs/PRIVACY.md).
 
 [Cómo está hecha la aplicación](docs/HOW_BUILT.md).
+
+## Mod opcional para Workshop
+
+El mod **2.3.2** agrega una ventana al menú principal y el acceso **F8**. Requiere la **aplicación de escritorio 2.3.1**, abierta en la misma PC y conectada a Google. La app funciona sin el mod; el mod necesita la app para listar y descargar copias. La suscripción de Workshop instala la integración Lua; el programa de Windows se descarga una vez desde la release.
+
+Las traducciones de B42.15+ usan JSON en inglés, español y español de Argentina. La ventana muestra fechas legibles, diferencia el catálogo guardado de uno actualizado, evita solicitudes simultáneas y deja de consultar archivos después de responder o agotar el tiempo de espera. Para recuperar una partida, cerrá Zomboid completamente y usá la aplicación.
+
+El mod 2.3.2 se está preparando para Workshop; la release de escritorio 2.3.1 conserva su integración anterior. [Preparar, probar y publicar el mod](docs/WORKSHOP.md).
 
 ## Identificación de instalaciones en la 2.3.1
 

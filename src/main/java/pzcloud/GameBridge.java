@@ -47,12 +47,14 @@ public final class GameBridge {
     }
     public void installMod() throws IOException {
         manager.guard.requireClosed(); Path modRoot=manager.config.zomboid().resolve("mods/PZCloudManagement"); Files.createDirectories(modRoot.resolve("common"));
-        for(String file:List.of("42/mod.info","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI_EN.txt","42/media/lua/shared/Translate/ES/UI_ES.txt")) {
+        for(String file:List.of("42/mod.info","42/poster.png","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI.json","42/media/lua/shared/Translate/ES/UI.json","42/media/lua/shared/Translate/AR/UI.json")) {
             try(var in=GameBridge.class.getResourceAsStream("/mod/PZCloudManagement/"+file)) {
                 if(in==null) throw new IOException("El paquete no incluye el mod. Ejecutá scripts/build.ps1 antes de instalar.");
                 FilesEx.atomicWrite(modRoot.resolve(file),in.readAllBytes());
             }
         }
+        // Remove only our superseded translations when upgrading a local installation.
+        for(String old:List.of("EN/UI_EN.txt","ES/UI_ES.txt")) Files.deleteIfExists(modRoot.resolve("42/media/lua/shared/Translate/"+old));
         log.accept("Mod instalado. Activá PZ Cloud Management en el menú Mods de Build 42.");
     }
 }

@@ -10,3 +10,6 @@ if ($LASTEXITCODE -ne 0) { throw 'Fallo la compilacion de pruebas.' }
 $taskClasspath = $taskClasses + [IO.Path]::PathSeparator + $taskTests
 & java '-Djava.awt.headless=true' -cp $taskClasspath pzcloud.SelfTest
 if ($LASTEXITCODE -ne 0) { throw 'Fallo una prueba.' }
+$taskConsumerClasspath = (Join-Path $taskRepo 'build/PZCloudManagement.jar') + [IO.Path]::PathSeparator + $taskTests
+& java '-Djava.awt.headless=true' -cp $taskConsumerClasspath pzcloud.WorkshopInstallSmoke
+if ($LASTEXITCODE -ne 0) { throw 'Fallo la instalacion del mod incluido.' }

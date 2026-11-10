@@ -1,6 +1,8 @@
 name=PZ Cloud Management
 id=PZCloudManagement
 author=Santiago Martin
-description=Cloud Saves browser for the PZ Cloud Management desktop companion. Browse and download Google Drive backups. Restore with the game fully closed in the companion.
-modversion=2.3.1-alpha.1
-versionMin=42.0
+description=Main-menu cloud save browser. REQUIRES the free PZ Cloud desktop app 2.3.1+ running on this PC and connected to Google Drive. Workshop installs the menu only. Restore worlds in the desktop app with Zomboid completely closed. Single player only.
+modversion=2.3.2
+versionMin=42.15
+poster=poster.png
+url=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1

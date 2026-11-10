@@ -1,0 +1,23 @@
+version=1
+id=
+title=PZ Cloud Management - Cloud Saves [B42]
+description=[h1]Tus partidas, a salvo[/h1]
+description=Consultá y descargá tus copias de Google Drive desde el menú principal de Project Zomboid. Español e inglés. Abrí la ventana con el botón PZ Cloud o con F8.
+description=
+description=[h2]Requiere la aplicación de escritorio gratuita[/h2]
+description=Este mod NO funciona como cliente de nube independiente. Instalá PZ Cloud 2.3.1 para Windows, abrilo e iniciá sesión con Google. La aplicación debe seguir abierta en la misma PC mientras usás este menú.
+description=[url=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1]Descargar PZ Cloud para Windows: Google y Java incluidos[/url]
+description=
+description=[h2]Cómo usarlo[/h2]
+description=1. Suscribite y activá PZ Cloud Management en Mods. Reiniciá el juego para cargar las traducciones.
+description=2. Abrí la app de escritorio, conectá Google y guardá una partida en la nube.
+description=3. Desde el menú de Zomboid, abrí PZ Cloud, actualizá la lista y elegí una copia para descargar.
+description=4. Para recuperarla, cerrá Zomboid por completo y usá Recuperar partida en la app de escritorio.
+description=
+description=[h2]Compatibilidad[/h2]
+description=Build 42.15+; objetivo de prueba B42.22.1. Solo partidas de un jugador. Usá las mismas builds y mods en ambas PC. Este menú no modifica partidas abiertas ni restaura mientras jugás. No necesita instalarse en servidores.
+description=La app también funciona sin el mod de Workshop. El mod solo agrega acceso desde el menú del juego. No pide archivos JSON ni credenciales de desarrollador.
+description=
+description=Integración 2.3.2 preliminar. Requiere validación visual final dentro de B42.22.1. No es una herramienta oficial de The Indie Stone.
+tags=Build 42;Interface;Utility
+visibility=public
