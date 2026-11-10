@@ -1,0 +1,123 @@
+name: Publish Knox Net 2.3.4 release
+
+on:
+  push:
+    branches: [development]
+    paths:
+      - '.github/workflows/publish-knoxnet-2.3.4.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require successful 2.3.4 test and packaging run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 60); do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/42866864646" --jq '.status')
+            if [ "$state" = completed ]; then
+              result=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/42866864646" --jq '.conclusion')
+              test "$result" = success || { echo "Verified 2.3.4 build failed: $result"; exit 1; }
+              break
+            fi
+            sleep 10
+          done
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/42866864646" --jq '.conclusion')" = success
+
+      - name: Download tested Windows and Workshop artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 42866864646 --repo "$GITHUB_REPOSITORY" --name KnoxNet-2.3.4-Windows-Google --dir stage/KnoxNet
+          gh run download 42866864646 --repo "$GITHUB_REPOSITORY" --name KnoxNet-Workshop-2.3.4 --dir stage/workshop
+
+      - name: Verify Google, security report and Workshop payload
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, struct, zipfile
+          app = pathlib.Path('stage/KnoxNet')
+          assert (app/'KnoxNet.exe').is_file()
+          assert (app/'app/PZCloudManagement.jar').is_file()
+          assert (app/'runtime').is_dir()
+          auth = json.loads((app/'GOOGLE_AUTH_STATUS.json').read_text(encoding='utf-8-sig'))
+          sec = json.loads((app/'SECURITY_STATUS.json').read_text(encoding='utf-8-sig'))
+          assert auth.get('applicationName') == 'Knox Net'
+          assert auth.get('version') == '2.3.4'
+          assert auth.get('googleClientBundled') is True
+          assert auth.get('nativeWindowsRuntimeTested') is True
+          assert sec.get('version') == '2.3.4'
+          assert sec.get('microsoftDefender') == 'passed', 'Defender scan not verified clean'
+          assert sec.get('exeSha256') and sec.get('jarSha256')
+          with zipfile.ZipFile('stage/workshop/KnoxNet-Workshop-2.3.4.zip') as package:
+            assert package.testzip() is None
+            prefix = 'KnoxNet-Workshop/'
+            metadata = package.read(prefix+'Contents/mods/PZCloudManagement/42/mod.info').decode()
+            assert 'id=KNManagement' in metadata.splitlines()
+            assert 'modversion=2.3.4' in metadata.splitlines()
+            workshop = package.read(prefix+'workshop.txt').decode()
+            assert workshop.startswith('version=1\nid=') and 'v2.3.4' in workshop
+            preview = package.read(prefix+'preview.png')
+            assert preview[:8] == b'\x89PNG\r\n\x1a\n'
+            assert struct.unpack('>II',preview[16:24]) == (512,512)
+            assert len(preview) < 1024*1024
+            for path in package.namelist():
+              if '/Contents/' in path:
+                assert not path.lower().endswith(('.exe','.dll','.jar','.zip','.ps1','.bat','.sh','.so'))
+          print('Validated Knox Net 2.3.4, bundled Google, Defender scan and Workshop package.')
+          PY
+
+      - name: Prepare release files and checksums
+        run: |
+          mkdir -p dist
+          (cd stage && zip -qr ../dist/KnoxNet-2.3.4-Windows-Google.zip KnoxNet)
+          cp stage/workshop/KnoxNet-Workshop-2.3.4.zip dist/
+          (cd dist && sha256sum *.zip > SHA256SUMS.txt)
+          cat > dist/RELEASE_NOTES.md <<'NOTES'
+          # Knox Net 2.3.4 — PZ Cloud Management
+
+          **Actualización del gestor y del mod de Project Zomboid Build 42.**
+
+          - Botón **Knox Net** arriba y centrado en el menú del juego, con margen adaptable entre resoluciones; acceso adicional con **F8**.
+          - Botón **Minimizar a la bandeja** en Windows, restauración desde el icono y opción **Salir**. Si la bandeja no está disponible, usa la minimización normal.
+          - Cliente OAuth de Google integrado en el ejecutable, sin solicitar JSON a los usuarios. Java incluido.
+          - Se conservan rutas de configuración, sesiones compatibles, partidas y respaldos anteriores.
+          - Traducciones EN, ES y AR. Mod para Workshop con ID **KNManagement** y autor **47**.
+          - Verificaciones automatizadas de Windows, Linux, mod Lua, paquete nativo y análisis de Microsoft Defender. Archivos de integridad SHA-256 adjuntos.
+
+          ## Instalar la app
+
+          Descargá `KnoxNet-2.3.4-Windows-Google.zip`, extraé **toda la carpeta** y ejecutá `KnoxNet.exe`.
+          Antes de abrir esta versión, cerrá completamente la versión anterior desde el icono de bandeja (**Salir**).
+
+          ## Publicar el mod en Steam Workshop
+
+          Descargá `KnoxNet-Workshop-2.3.4.zip` y extraé la carpeta `KnoxNet-Workshop` completa.
+          Copiala a `%UserProfile%/Zomboid/Workshop/`, luego en el menú de Project Zomboid abrí **Workshop → Crear y actualizar artículos**, seleccioná `KnoxNet-Workshop` y publicá.
+          El mod requiere que la aplicación de Windows esté ejecutándose en la misma PC para listar y descargar copias desde Google.
+          **Este archivo de GitHub no publica automáticamente un artículo en Steam Workshop.**
+
+          ## Validaciones pendientes
+
+          El escaneo de Microsoft Defender del build automatizado terminó sin detecciones, pero `KnoxNet.exe` **todavía no está firmado digitalmente** y no se ha confirmado que Avast retire la detección `IDP.Generic`.
+          Tampoco se ha validado el OAuth con una cuenta real ni la apariencia y restauración real en PZ B42.22.1. Por eso se presenta inicialmente como **prerelease**, apta para pruebas y preparación del Workshop.
+          NOTES
+
+      - name: Publish checked 2.3.4 prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v2.3.4 \
+            dist/KnoxNet-2.3.4-Windows-Google.zip \
+            dist/KnoxNet-Workshop-2.3.4.zip \
+            dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 27f52bbdc6179aad5435a0c8004f1dccdd3140c5 \
+            --title "Knox Net 2.3.4 — PZ Cloud Management" \
+            --notes-file dist/RELEASE_NOTES.md \
+            --prerelease
