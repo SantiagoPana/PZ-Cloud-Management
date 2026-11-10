@@ -33,7 +33,7 @@ jobs:
       - name: Consumer JAR (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: java -Djava.awt.headless=true -cp "build/PZCloudManagement.jar;build/test-classes" pzcloud.BundledClientSmoke --consumer
+        run: java "-Djava.awt.headless=true" -cp "build/PZCloudManagement.jar;build/test-classes" pzcloud.BundledClientSmoke --consumer
       - name: Sign-in window test (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
