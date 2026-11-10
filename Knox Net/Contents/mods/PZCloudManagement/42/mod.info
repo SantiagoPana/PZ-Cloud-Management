@@ -1,0 +1,10 @@
+name=Knox Net [PZ Cloud management]
+id=KNManagement
+author=47
+icon=cloud.png
+description=PZ Cloud Management. Main-menu cloud save browser. REQUIRES the free Knox Net desktop app running on this PC and connected to Google Drive. Workshop installs the menu only. Restore worlds in the desktop app with Zomboid completely closed. Single player only.
+description=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/
+modversion=2.3.5
+versionMin=42.15
+poster=poster.png
+url=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/
