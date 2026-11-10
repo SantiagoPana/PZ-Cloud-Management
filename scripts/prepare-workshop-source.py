@@ -47,7 +47,7 @@ for name in ("workshop.txt", "README_PUBLICAR.txt"):
     text = text.replace("El mod 2.3.2", "El mod 2.3.5")
     text = text.replace("app 2.3.2", "app 2.3.5")
     text = text.replace("del mod 2.3.2", "del mod 2.3.5")
-    text = text.replace("esta versión", "esta versión")
+    text = text.replace("KnoxNet-Workshop", "Knox Net")
     file.write_text(text, encoding="utf-8")
 
 print("Staged Workshop author's source for the 2.3.5 build:")
