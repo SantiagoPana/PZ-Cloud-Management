@@ -1,9 +1,9 @@
 name: Test and package
 on:
   push:
-    branches: [development]
+    branches: [main, development]
   pull_request:
-    branches: [development]
+    branches: [main, development]
   workflow_dispatch:
 permissions:
   contents: read
@@ -70,7 +70,12 @@ jobs:
         shell: pwsh
         env:
           PZCLOUD_GOOGLE_CLIENT_JSON: ${{ secrets.PZCLOUD_GOOGLE_CLIENT_JSON }}
-        run: ./scripts/build.ps1 -Package
+        run: |
+          if ($env:GITHUB_REF -eq 'refs/heads/main') {
+              ./scripts/build.ps1 -Package -RequireGoogleLogin
+          } else {
+              ./scripts/build.ps1 -Package
+          }
       - name: Launch packaged Windows runtime with isolated Google fixture
         shell: pwsh
         run: ./scripts/test-native-windows.ps1
