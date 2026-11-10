@@ -8,7 +8,7 @@ Windows usa `%LOCALAPPDATA%\PZCloudManagement`; POSIX usa `~/.pzcloud`. `-Dpzclo
 | `backups/<snapshotId>.zip` | Versión completa e inmutable del mundo |
 | `backups/<snapshotId>.meta.json` | SHA-256/MD5, resumen compacto del manifiesto, bytes, estado local/pendiente/sincronizado/carpeta, ID remoto y último error |
 | `sessions/<snapshotId>.json` | ID de Drive preasignado y URI de subida mientras está pendiente |
-| `google-client.json` | Cliente OAuth de escritorio importado |
+| `google-client.json` (legado) | Ignorado por el cliente 2.3 |
 | `google-session.token` | Tokens de sesión; DPAPI CurrentUser en Windows, permisos 0600 en POSIX |
 | `session-state.json` | Registro de sesión PZ que espera respaldo al salir |
 | `activity.log` | Operaciones/errores, con rotación a `activity.previous.log`; no contiene tokens |
@@ -35,12 +35,12 @@ En `Zomboid/Lua/`: `pzcloud-request.txt` con `1|nonce|OPEN`, `1|nonce|LIST` o `1
 
 El ZIP sigue siendo schema 1. Los JSON laterales agregan `summary`, `bytes` y `md5`; los anteriores se migran una vez sin modificar el ZIP. `summary` no incluye listas de archivos/directorios. `folder` significa copia entregada a una carpeta local; no confirma el estado de un servicio externo.
 
-`config.json` agrega `cloudMode` (`none`, `folder`, `drive`), `syncFolder` y `setupComplete`. Al detectar un cliente OAuth anterior conserva el modo directo. La configuración de mundos y los identificadores se conservan.
+`config.json` agrega `cloudMode` (`none`, `folder`, `drive`), `syncFolder` y `setupComplete`. Una preferencia de modo directo ya guardada se conserva. La configuración de mundos y los identificadores se conservan.
 
 El modo carpeta publica `PZCloud-<snapshotId>.zip` y `PZCloud-<snapshotId>.json` en el destino; el segundo incluye metadatos de presentación y SHA-256. El catálogo ignora marcadores incompletos, renombrados por conflictos o sin un ZIP del tamaño esperado.
 
-## Cliente del autor en la 2.1
+## Identidad incluida en la 2.3
 
-Un portable configurado incluye `/auth/google-client.json` como recurso del JAR. El autor lo suministra al compilar; el recurso no proviene de un token del usuario. Al iniciar una sesión se guarda el cliente elegido en la carpeta de datos para conservar su identidad en actualizaciones. La configuración de usuario existente tiene prioridad sobre nuevos valores distribuidos.
+El cliente lee únicamente `/auth/google-client.json` desde el JAR. La identidad se carga una vez en memoria y no se sustituye por archivos de la carpeta de datos, propiedades de JVM o variables de entorno. Las sesiones para el mismo cliente mantienen compatibilidad; si el ID difiere, se pide volver a autorizar y se conserva la sesión previa hasta completar un nuevo ingreso.
 
-`GOOGLE_AUTH_STATUS.json` del portable contiene solo versión y estado de inclusión de cliente. No contiene IDs, secretos ni tokens. La ausencia de cliente deshabilita el botón de conexión real con un mensaje para el autor.
+`GOOGLE_AUTH_STATUS.json` contiene versión y estado de inclusión. No contiene IDs, secretos ni tokens. Una edición sin configuración pide actualizar el programa y conserva disponibles las copias locales. El publicador y las guías de autor quedan fuera del portable.

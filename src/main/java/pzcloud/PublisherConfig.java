@@ -9,15 +9,19 @@ public final class PublisherConfig {
     private PublisherConfig() {}
     static boolean prepare(Path resources,Path report,Path input,boolean required) throws IOException {
         Map<String,Object> document;
-        if(input!=null) document=GoogleClientDefaults.read(input);
+        if(input!=null) {
+            if(Files.size(input)>65536) throw new IOException("El cliente del autor es demasiado grande.");
+            document=FilesEx.readJson(input);
+        }
         else {
             String json=System.getenv("PZCLOUD_GOOGLE_CLIENT_JSON");
-            document=json!=null&&!json.isBlank()?Json.object(Json.parse(json)):GoogleClientDefaults.load();
+            String id=System.getenv("PZCLOUD_GOOGLE_CLIENT_ID");
+            document=json!=null&&!json.isBlank()?Json.object(Json.parse(json)):id!=null&&!id.isBlank()?Map.of("installed",Map.of("client_id",id.trim(),"client_secret",System.getenv().getOrDefault("PZCLOUD_GOOGLE_CLIENT_SECRET",""))):Map.of();
         }
         return prepareDocument(resources,report,document,required);
     }
     static boolean prepareDocument(Path resources,Path report,Map<String,Object> document,boolean required) throws IOException {
-        FilesEx.json(report,Map.of("version","2.2.0","googleClientBundled",false,"liveGoogleLoginTested",false));
+        FilesEx.json(report,Map.of("version","2.3.0","googleClientBundled",false,"liveGoogleLoginTested",false));
         Path target=resources.resolve("auth/google-client.json"); boolean configured=!document.isEmpty();
         // A new build cannot accidentally retain the identity from an older configured build.
         Files.deleteIfExists(target);
@@ -27,7 +31,7 @@ public final class PublisherConfig {
             if(id.length()>256||!id.endsWith(".apps.googleusercontent.com")) throw new IOException("El autor debe usar un cliente de Google de tipo Aplicación de escritorio.");
             FilesEx.json(target,Map.of("installed",Map.of("client_id",id,"client_secret",Json.str(installed,"client_secret"))));
         }
-        FilesEx.json(report,Map.of("version","2.2.0","googleClientBundled",configured,"liveGoogleLoginTested",false));
+        FilesEx.json(report,Map.of("version","2.3.0","googleClientBundled",configured,"liveGoogleLoginTested",false));
         if(required&&!configured) throw new IOException("Falta el cliente de Google de la app. Esta compilación exige publicarlo configurado.");
         return configured;
     }

@@ -64,7 +64,7 @@ public final class PzCloudApp {
                 manager.restore(local,local.snapshot().get("mode"),args[2],Arrays.asList(args).contains("--replace"));
             }
             case "login" -> {
-                if(args.length>1) manager.auth.importClient(Path.of(args[1])); manager.auth.connect(ManagerWindow::openBrowser); manager.auth.verifyDriveAccess(); manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); System.out.println("Google Drive comprobado.");
+                if(args.length!=1) throw new IOException("Uso: login"); manager.auth.connect(ManagerWindow::openBrowser); manager.auth.verifyDriveAccess(); manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); System.out.println("Google Drive comprobado.");
             }
             case "check-google" -> { manager.auth.verifyDriveAccess(); System.out.println("Acceso al espacio de respaldos de Google Drive comprobado."); }
             case "logout" -> manager.auth.disconnect();

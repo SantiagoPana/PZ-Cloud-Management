@@ -17,11 +17,10 @@ import java.util.function.Consumer;
 public final class GoogleAuth {
     static final String SCOPE="https://www.googleapis.com/auth/drive.appdata";
     @FunctionalInterface interface ClientSource { Map<String,Object> load() throws IOException; }
-    private final Path clientFile;
     private final TokenVault vault;
     private final URI tokenEndpoint;
     private final Duration loginTimeout;
-    private final ClientSource defaults;
+    private final Map<String,Object> applicationClient;
     private final AtomicReference<Attempt> connecting=new AtomicReference<>();
     private Map<String,Object> token;
     private HttpClient http;
@@ -35,37 +34,34 @@ public final class GoogleAuth {
     public GoogleAuth(Path home) throws IOException { this(home,URI.create("https://oauth2.googleapis.com/token")); }
     GoogleAuth(Path home,URI endpoint) throws IOException { this(home,endpoint,Duration.ofMinutes(5),GoogleClientDefaults::load); }
     GoogleAuth(Path home,URI endpoint,Duration timeout,ClientSource defaults) throws IOException {
-        clientFile=home.resolve("google-client.json"); vault=new TokenVault(home.resolve("google-session.token"));
-        tokenEndpoint=endpoint; loginTimeout=timeout; this.defaults=defaults;
+        vault=new TokenVault(home.resolve("google-session.token"));
+        tokenEndpoint=endpoint; loginTimeout=timeout;
+        Map<String,Object> bundled;
+        try { bundled=Map.copyOf(validateClient(defaults.load())); } catch(IOException ex) { bundled=Map.of(); }
+        applicationClient=bundled;
         try { token=vault.read(); } catch(IOException ex) { token=new LinkedHashMap<>(); sessionProblem="La sesión anterior necesita volver a conectarse."; }
+        if(!Json.str(token,"refresh_token").isBlank()&&!Json.str(token,"client_id").equals(Json.str(applicationClient,"client_id"))) sessionProblem="Volvé a iniciar sesión para usar la conexión de esta versión de PZ Cloud.";
     }
     synchronized HttpClient http() { if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build(); return http; }
     public synchronized String connectionId() { return HexFormat.of().formatHex(FilesEx.digest("SHA-256").digest((Json.str(token,"client_id")+"|"+Json.str(token,"refresh_token")).getBytes(StandardCharsets.UTF_8))); }
-    public synchronized boolean connected() { return !Json.str(token,"refresh_token").isBlank(); }
+    public synchronized boolean connected() { return !applicationClient.isEmpty()&&!Json.str(token,"refresh_token").isBlank()&&Json.str(token,"client_id").equals(Json.str(applicationClient,"client_id")); }
     public boolean isConnecting() { return connecting.get()!=null; }
     public boolean configured() { try { client(); return true; } catch(IOException ex) { return false; } }
     public String sessionProblem() { return sessionProblem; }
     public String configurationProblem() {
         try { client(); return ""; }
-        catch(IOException ex) { return "El autor todavía debe habilitar el ingreso con Google en esta edición. Tus copias locales siguen disponibles."; }
+        catch(IOException ex) { return "Google no está disponible en esta edición. Actualizá PZ Cloud para conectar tu cuenta. Tus copias locales siguen disponibles."; }
     }
-    private Map<String,Object> clientDocument() throws IOException {
-        Map<String,Object> document=Files.exists(clientFile)?GoogleClientDefaults.read(clientFile):defaults.load();
-        validateClient(document); return document;
+    private Map<String,Object> client() throws IOException {
+        if(applicationClient.isEmpty()) throw new IOException("La conexión de Google de esta edición no está disponible. Actualizá PZ Cloud.");
+        return applicationClient;
     }
-    private Map<String,Object> client() throws IOException { return validateClient(clientDocument()); }
     private Map<String,Object> validateClient(Map<String,Object> document) throws IOException {
-        if(!document.containsKey("installed")) throw new IOException("Esta edición todavía no incluye la conexión de Google del autor.");
+        if(!document.containsKey("installed")) throw new IOException("La conexión de Google de esta edición no está disponible.");
         Map<String,Object> client=Json.object(document.get("installed"));
         String id=Json.str(client,"client_id");
         if(id.isBlank()||id.length()>256||!id.endsWith(".apps.googleusercontent.com")||Json.str(client,"client_secret").length()>4096) throw new IOException("La conexión de Google de la app no es válida.");
         return client;
-    }
-    public synchronized void importClient(Path input) throws IOException {
-        if(isConnecting()) throw new IOException("Terminá o cancelá la conexión en curso antes de cambiar la configuración.");
-        var document=GoogleClientDefaults.read(input); var client=validateClient(document);
-        if(connected()&&!Json.str(token,"client_id").equals(Json.str(client,"client_id"))) throw new IOException("Desconectá la cuenta antes de cambiar el cliente OAuth.");
-        FilesEx.json(clientFile,Map.of("installed",Map.of("client_id",Json.str(client,"client_id"),"client_secret",Json.str(client,"client_secret"))));
     }
     /** Returns false only after the session has reached its final, non-cancellable commit. */
     public boolean cancelConnection() {
@@ -81,9 +77,7 @@ public final class GoogleAuth {
         if(!connecting.compareAndSet(null,attempt)) throw new IOException("Ya hay un inicio de sesión en curso.");
         HttpServer callback=null;
         try {
-            Map<String,Object> document=clientDocument(),client=validateClient(document);
-            // Pin the client used by this session across updates of the distributed application.
-            if(!Files.exists(clientFile)) FilesEx.json(clientFile,document);
+            Map<String,Object> client=client();
             String verifier=random(64),state=random(32);
             String challenge=Base64.getUrlEncoder().withoutPadding().encodeToString(FilesEx.digest("SHA-256").digest(verifier.getBytes(StandardCharsets.US_ASCII)));
             callback=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
@@ -142,8 +136,8 @@ public final class GoogleAuth {
                 if(response.statusCode()==401&&attempt==0) continue;
                 if(response.statusCode()==200) { Json.array(Json.object(Json.parse(new String(bytes,StandardCharsets.UTF_8))).get("files")); return; }
                 String reason=new String(bytes,StandardCharsets.UTF_8);
-                if(response.statusCode()==403&&(reason.contains("accessNotConfigured")||reason.contains("SERVICE_DISABLED"))) throw new IOException("Tu sesión de Google está guardada, pero el autor debe habilitar Google Drive API en el proyecto de PZ Cloud.");
-                if(response.statusCode()==403) throw new IOException("Google no autorizó el acceso a tus respaldos. Volvé a autorizar Drive con Elegir otra cuenta. Si sigue fallando, revisá los usuarios de prueba del proyecto.");
+                if(response.statusCode()==403&&(reason.contains("accessNotConfigured")||reason.contains("SERVICE_DISABLED"))) throw new IOException("Tu sesión está guardada, pero Google Drive no está disponible para PZ Cloud. Contactá al soporte de la aplicación.");
+                if(response.statusCode()==403) throw new IOException("Google no autorizó el acceso a tus respaldos. Volvé a autorizar Drive con Elegir otra cuenta. Si sigue fallando, contactá al soporte de PZ Cloud.");
                 if(response.statusCode()==401) throw new IOException("Google necesita que vuelvas a iniciar sesión. Elegí otra cuenta para autorizar de nuevo.");
                 throw new IOException("No se pudo comprobar Google Drive (HTTP "+response.statusCode()+"). La sesión está guardada; podés reintentar.");
             } catch(TimeoutException ex) { throw new IOException("Google Drive tardó demasiado. La sesión está guardada; podés reintentar.",ex); }

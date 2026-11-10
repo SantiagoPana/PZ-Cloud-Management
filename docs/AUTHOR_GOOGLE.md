@@ -11,13 +11,9 @@ Esta configuración la hace el autor de PZ Cloud. Los usuarios finales solo debe
 
 Google requiere una identidad OAuth registrada; un botón o una ventana no pueden reemplazarla. La app ya implementa el flujo de escritorio y no necesita pedir a cada usuario que cree su propio proyecto.
 
-## Probar desde el gestor
+## Ediciones para usuarios
 
-En **Iniciar sesión con Google → Habilitar Google (autor)** se abre el asistente de configuración. **Abrir Google Cloud** lleva a la consola y **Cargar JSON de la aplicación** permite importar el cliente de escritorio descargado. Tras cargarlo, la ventana de ingreso comienza la autorización normal. Los clientes de tipo Web se rechazan y un error de importación permite corregir el archivo sin reiniciar.
-
-Después de recibir la sesión, la app realiza una consulta de lectura al espacio privado `appDataFolder`. Si la API de Drive está deshabilitada o el permiso falla, conserva la sesión pero muestra el problema en vez de anunciar una conexión lista. No sube archivos de prueba ni consulta tu perfil o tu correo.
-
-La importación configura esa PC para las pruebas del autor. Para que el resto de usuarios solo inicie sesión, generá el portable con ese mismo cliente siguiendo los pasos de compilación de abajo.
+Desde la 2.3, la identidad de Google se incorpora exclusivamente al compilar. El cliente distribuido no incluye asistente de autor, importación de credenciales, reemplazos por variables de entorno o parámetros de JVM, ni el publicador de compilación. Las guías de desarrollo se conservan solo en el repositorio.
 
 ## Generar el portable configurado
 
@@ -27,7 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package -
 
 También podés colocar el archivo en `release/google-client.json` antes de compilar; está excluido de Git. El publicador valida el formato, incorpora únicamente la identidad de aplicación y elimina recursos obsoletos de compilaciones anteriores. No se incluyen tokens de usuario.
 
-`-RequireGoogleLogin` hace fallar la compilación si falta esa configuración. Sin ese parámetro se permite una vista previa; su ventana explica que Google aún no está habilitado. `GOOGLE_AUTH_STATUS.json` dentro del portable indica `googleClientBundled`. Ese valor confirma que hay configuración, no que se haya realizado una conexión real durante la compilación.
+`-RequireGoogleLogin` hace fallar la compilación si falta esa configuración. Sin ese parámetro se permite una vista previa; su ventana pide actualizar la aplicación. `GOOGLE_AUTH_STATUS.json` dentro del portable indica `googleClientBundled`. Ese valor confirma que hay configuración, no que se haya realizado una conexión real durante la compilación.
 
 ## Compilar desde GitHub Actions
 
@@ -41,6 +37,6 @@ Abrí el portable en una PC de prueba sin `google-client.json` anterior, pulsá 
 
 El JSON contiene identidad de una aplicación de escritorio distribuida: no es una sesión de usuario ni un secreto de servidor que pueda mantenerse oculto dentro del ejecutable. Los access/refresh tokens sí pertenecen a cada usuario y nunca deben publicarse. El proceso de compilación descarta cualquier campo de tokens de usuario que aparezca por error en el documento.
 
-La app conserva el cliente usado por cada conexión para que una actualización del instalable no cambie silenciosamente la identidad de una sesión ya guardada. La configuración anterior de la 1.0/2.0 se mantiene compatible.
+La app conserva una sesión existente si fue creada con el mismo cliente incluido. Una sesión para otra identidad requiere una nueva autorización y no se usa para subir copias. Los archivos de cliente guardados por versiones anteriores se ignoran. Los datos de las partidas y copias no se borran.
 
 Referencias: [OAuth de escritorio](https://developers.google.com/identity/protocols/oauth2/native-app) y [políticas OAuth](https://developers.google.com/identity/protocols/oauth2/policies).

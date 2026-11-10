@@ -287,8 +287,7 @@ public final class SelfTest {
             TokenVault vault=new TokenVault(dir("vault").resolve("session.token")); var value=Map.<String,Object>of("refresh_token","x".repeat(12000)); vault.write(value); eq(vault.read(),value); vault.delete(); ok(!vault.exists());
         });
         try(MockDrive mock=new MockDrive()) {
-            Path home=dir("oauth/app"); GoogleAuth auth=new GoogleAuth(home,mock.base.resolve("token")); Path client=dir("oauth").resolve("client.json");
-            FilesEx.json(client,Map.of("installed",Map.of("client_id","test.apps.googleusercontent.com","client_secret","test-public-desktop-secret"))); auth.importClient(client);
+            Path home=dir("oauth/app"); GoogleAuth auth=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("test"));
             test("OAuth uses PKCE S256, random state and loopback callback; invalid state is refused",()-> {
                 auth.connect(uri->{
                     try {
@@ -297,11 +296,11 @@ public final class SelfTest {
                         eq(http.send(HttpRequest.newBuilder(URI.create(callback+"?state=invalid&code=test")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode(),400);
                         eq(http.send(HttpRequest.newBuilder(URI.create(callback+"?state="+q.get("state")+"&code=test-code")).GET().build(),HttpResponse.BodyHandlers.ofString()).statusCode(),200);
                     } catch(Exception ex) { throw new RuntimeException(ex); }
-                }); ok(auth.connected()); eq(auth.accessToken(false),"access-initial"); ok(!Files.readString(home.resolve("google-client.json")).contains("access-initial"));
+                }); ok(auth.connected()); eq(auth.accessToken(false),"access-initial"); ok(!Files.exists(home.resolve("google-client.json")));
             });
-            test("Refresh token survives restart; refresh rotation retains long-lived token",()-> { GoogleAuth restarted=new GoogleAuth(home,mock.base.resolve("token")); eq(restarted.accessToken(true),"access-refreshed"); ok(restarted.connected()); eq(new GoogleAuth(home,mock.base.resolve("token")).accessToken(false),"access-refreshed"); });
+            test("Refresh token survives restart; refresh rotation retains long-lived token",()-> { GoogleAuth restarted=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("test")); eq(restarted.accessToken(true),"access-refreshed"); ok(restarted.connected()); eq(new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("test")).accessToken(false),"access-refreshed"); });
             test("Invalid grant leaves backups untouched and reports reconnect",()-> { mock.invalidGrant=true; fails(()->auth.accessToken(true)); mock.invalidGrant=false; });
-            test("Cannot replace OAuth client while connected",()-> { Path different=dir("oauth").resolve("other.json"); FilesEx.json(different,Map.of("installed",Map.of("client_id","other.apps.googleusercontent.com"))); fails(()->auth.importClient(different)); });
+            test("Local client JSON cannot replace the bundled identity or an existing matching session",()-> { FilesEx.json(home.resolve("google-client.json"),desktopClient("other")); GoogleAuth unchanged=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("test")); ok(unchanged.connected()); eq(unchanged.accessToken(true),"access-refreshed"); });
             test("Disconnect removes local credential; cancelled login stores no session",()-> {
                 auth.disconnect(); ok(!Files.exists(home.resolve("google-session.token"))); fails(()->auth.connect(uri->{ try { var q=GoogleAuth.query(uri.getRawQuery()); HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(q.get("redirect_uri")+"?state="+q.get("state")+"&error=access_denied")).GET().build(),HttpResponse.BodyHandlers.ofString()); } catch(Exception ex) { throw new RuntimeException(ex); } })); ok(!auth.connected());
             });
@@ -309,11 +308,11 @@ public final class SelfTest {
                 auth.connect(uri->approveLogin(uri,mock)); int before=mock.files.size(); auth.verifyDriveAccess(mock.base.resolve("drive-check?spaces=appDataFolder&pageSize=1&fields=files(id)")); eq(mock.files.size(),before); ok(mock.driveChecks>0);
             });
             test("Drive readiness reports disabled API without claiming a usable connection",()-> {
-                mock.driveCheckStatus=403; try { auth.verifyDriveAccess(mock.base.resolve("drive-check")); throw new AssertionError("Disabled Drive must fail"); } catch(IOException ex) { ok(ex.getMessage().contains("habilitar Google Drive API")); } finally { mock.driveCheckStatus=200; } ok(auth.connected());
+                mock.driveCheckStatus=403; try { auth.verifyDriveAccess(mock.base.resolve("drive-check")); throw new AssertionError("Disabled Drive must fail"); } catch(IOException ex) { ok(ex.getMessage().contains("Contactá al soporte")); } finally { mock.driveCheckStatus=200; } ok(auth.connected());
             });
             test("Drive readiness refreshes an expired access token once",()-> { mock.driveCheck401Once=true; int before=mock.driveChecks; auth.verifyDriveAccess(mock.base.resolve("drive-check")); eq(mock.driveChecks,before+2); eq(auth.accessToken(false),"access-refreshed"); });
             test("Drive readiness rejects an incomplete successful HTTP response",()-> { mock.driveBadCheck=true; try { fails(()->auth.verifyDriveAccess(mock.base.resolve("drive-check"))); } finally { mock.driveBadCheck=false; } });
-            test("Importing an author identity cannot retain user tokens",()-> { Path clean=dir("oauth/clean"),input=clean.resolve("publisher.json"); var value=new LinkedHashMap<>(desktopClient("clean")); value.put("refresh_token","DO_NOT_COPY"); FilesEx.json(input,value); GoogleAuth configured=new GoogleAuth(clean,mock.base.resolve("token")); configured.importClient(input); ok(!Files.readString(clean.resolve("google-client.json")).contains("DO_NOT_COPY")); ok(!configured.connected()); });
+            test("A local JSON with client and user tokens cannot enable an unconfigured runtime",()-> { Path clean=dir("oauth/clean"); var value=new LinkedHashMap<>(desktopClient("external")); value.put("refresh_token","DO_NOT_IMPORT"); FilesEx.json(clean.resolve("google-client.json"),value); GoogleAuth unavailable=new GoogleAuth(clean,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),Map::of); ok(!unavailable.configured()); ok(!unavailable.connected()); ok(!Files.exists(clean.resolve("google-session.token"))); });
         }
     }
     static Map<String,Object> desktopClient(String id) { return Map.of("installed",Map.of("client_id",id+".apps.googleusercontent.com","client_secret","public-desktop-test")); }
@@ -325,10 +324,14 @@ public final class SelfTest {
         } catch(Exception ex) { throw new RuntimeException(ex); }
     }
     static void signInTests() throws Exception {
+        test("Runtime ignores external JSON, environment and JVM client overrides",()-> {
+            String java=Path.of(System.getProperty("java.home"),"bin",System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")?"java.exe":"java").toString();
+            ProcessBuilder check=new ProcessBuilder(java,"-Djava.awt.headless=true","-cp",System.getProperty("java.class.path"),"pzcloud.BundledClientSmoke"); check.environment().put("PZCLOUD_GOOGLE_CLIENT_ID","external.apps.googleusercontent.com"); check.environment().put("PZCLOUD_GOOGLE_CLIENT_SECRET","external-public-secret"); check.redirectErrorStream(true); Process process=check.start(); ok(process.waitFor(15,TimeUnit.SECONDS)); String output=new String(process.getInputStream().readAllBytes(),StandardCharsets.UTF_8); if(process.exitValue()!=0) throw new AssertionError(output);
+        });
         try(MockDrive mock=new MockDrive()) {
             Path home=dir("signin/publisher-client"); GoogleAuth auth=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("publisher"));
-            test("Publisher-supplied client signs in without importing an end-user JSON",()-> { ok(auth.configured()); auth.connect(uri->approveLogin(uri,mock)); ok(auth.connected()); eq(Json.str(Json.object(FilesEx.readJson(home.resolve("google-client.json")).get("installed")),"client_id"),"publisher.apps.googleusercontent.com"); });
-            test("Session pins its original client across an app configuration change",()-> { GoogleAuth changed=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("different-publisher")); eq(changed.accessToken(true),"access-refreshed"); });
+            test("Publisher-supplied client signs in without importing an end-user JSON",()-> { ok(auth.configured()); auth.connect(uri->approveLogin(uri,mock)); ok(auth.connected()); ok(!Files.exists(home.resolve("google-client.json"))); });
+            test("A session for another application requires reconnecting without deleting its saved data",()-> { String before=FilesEx.hash(home.resolve("google-session.token"),"SHA-256"); GoogleAuth changed=new GoogleAuth(home,mock.base.resolve("token"),java.time.Duration.ofSeconds(5),()->desktopClient("different-publisher")); ok(!changed.connected()); ok(!changed.sessionProblem().isBlank()); fails(()->changed.accessToken(true)); eq(FilesEx.hash(home.resolve("google-session.token"),"SHA-256"),before); });
             test("Unconfigured distribution never opens a fake Google login",()-> {
                 GoogleAuth missing=new GoogleAuth(dir("signin/missing"),mock.base.resolve("token"),java.time.Duration.ofSeconds(1),Map::of); AtomicInteger opened=new AtomicInteger(); ok(!missing.configured()); ok(!missing.configurationProblem().isBlank()); fails(()->missing.connect(uri->opened.incrementAndGet())); eq(opened.get(),0); ok(!missing.isConnecting());
             });

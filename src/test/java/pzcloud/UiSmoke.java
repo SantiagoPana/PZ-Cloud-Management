@@ -51,7 +51,9 @@ public final class UiSmoke {
             SwingUtilities.invokeAndWait(()-> { try { window=new ManagerWindow(manager,worker); window.setVisible(true); } catch(Exception ex) { throw new RuntimeException(ex); } }); drain(worker);
             // Native dialog is interacted with through Swing, using the same actions as a user.
             SwingUtilities.invokeLater(()->button("Configuración").doClick()); JDialog config=dialog();
-            SwingUtilities.invokeAndWait(()-> { var radio=find(config,JRadioButton.class,b->b.getText().equals("Solo en esta PC")); if(radio==null) throw new AssertionError("No simple local option"); radio.setSelected(true); }); accept(config); drain(worker);
+            SwingUtilities.invokeAndWait(()-> { var radio=find(config,JRadioButton.class,b->b.getText().equals("Solo en esta PC")); if(radio==null) throw new AssertionError("No simple local option"); radio.setSelected(true); });
+            SwingUtilities.invokeLater(()->find(config,JButton.class,b->b.getText().equals("Más opciones…")).doClick()); JDialog advanced=dialog();
+            SwingUtilities.invokeAndWait(()-> { if(find(advanced,JButton.class,b->b.getText().contains("autor")||b.getText().contains("JSON"))!=null) throw new AssertionError("Advanced settings must not expose publisher configuration"); }); accept(advanced); accept(config); drain(worker);
             if(!c.get("cloudMode").equals("none")) throw new AssertionError("Configuration was not applied");
             SwingUtilities.invokeAndWait(()-> { var search=find(window,JTextField.class,t->true); search.setText("No existe esta partida"); if(button("Guardar partida").isEnabled()||button("Jugar").isEnabled()) throw new AssertionError("Empty search must disable actions for missing worlds"); search.setText("Riverside"); if(!button("Guardar partida").isEnabled()) throw new AssertionError("Search should select the matching world"); search.setText(""); });
             int before=manager.history(null).size(); SwingUtilities.invokeAndWait(()->button("Guardar partida").doClick()); drain(worker);

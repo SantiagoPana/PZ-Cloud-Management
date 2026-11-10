@@ -1,11 +1,13 @@
-# Estado 2.2.0-alpha.1
+# Estado 2.3.0-alpha.1
 
 ## Implementado y probado
+
+- [x] Cliente de usuario sin importación de credenciales ni herramientas de autor.
+- [x] Identidad de Google incluida exclusivamente en la compilación, con sesiones compatibles conservadas.
 
 - [x] Búsqueda sin escanear el mundo, listas de dos líneas y acciones según la selección.
 - [x] Envío manual de pendientes y mensajes claros de destino y cola.
 - [x] Comprobación de permisos de Drive después del ingreso y al reutilizar sesión.
-- [x] Asistente de configuración única del autor dentro del programa.
 
 - [x] Ventana de ingreso a Google con retorno automático, cancelación y reutilización de sesión.
 - [x] Configuración de Google incluida por el autor, sin archivo JSON en el recorrido normal.
@@ -17,7 +19,7 @@
 - [x] Trabajo por eventos, reposo manual sin sondeos y reintentos con espera creciente.
 - [x] Buffers reutilizados, dos hashes en una lectura y clientes HTTP diferidos.
 - [x] Cola durable, transferencias reanudables, restauración con respaldo previo y recuperación de interrupciones.
-- [x] 83 pruebas de integración y flujo gráfico de configurar/guardar/recuperar.
+- [x] 84 pruebas de integración y flujo gráfico de configurar/guardar/recuperar.
 - [x] Comparación reproducible de consumo con la 1.0.
 - [x] Workflow de Windows/Linux y portable Windows con Java comprimido.
 

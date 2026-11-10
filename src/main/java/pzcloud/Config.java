@@ -11,10 +11,10 @@ public final class Config {
         this.home=home.toAbsolutePath().normalize(); Files.createDirectories(this.home);
         data=Files.exists(home.resolve("config.json")) ? FilesEx.readJson(home.resolve("config.json")) : new LinkedHashMap<>();
         String before=Json.encode(data); boolean publisherReady=false;
-        try { var defaultClient=GoogleClientDefaults.load(); if(defaultClient.containsKey("installed")) publisherReady=Json.str(Json.object(defaultClient.get("installed")),"client_id").endsWith(".apps.googleusercontent.com"); } catch(IOException ignored) { /* The login window reports publisher setup, local backup still works. */ }
-        data.putIfAbsent("cloudMode",Files.exists(home.resolve("google-client.json"))||publisherReady?"drive":"none");
+        try { var defaultClient=GoogleClientDefaults.load(); if(defaultClient.containsKey("installed")) publisherReady=Json.str(Json.object(defaultClient.get("installed")),"client_id").endsWith(".apps.googleusercontent.com"); } catch(IOException ignored) { /* Local backups remain available if this edition has no Google connection. */ }
+        data.putIfAbsent("cloudMode",publisherReady?"drive":"none");
         data.putIfAbsent("syncFolder","");
-        data.putIfAbsent("setupComplete",Files.exists(home.resolve("google-client.json")));
+        data.putIfAbsent("setupComplete",false);
         data.putIfAbsent("zomboid", Path.of(System.getProperty("user.home"),"Zomboid").toString());
         data.putIfAbsent("deviceId",UUID.randomUUID().toString());
         data.putIfAbsent("deviceName",System.getenv().getOrDefault("COMPUTERNAME",System.getenv().getOrDefault("HOSTNAME","Mi PC")));

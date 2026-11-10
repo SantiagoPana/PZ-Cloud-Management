@@ -1,32 +1,17 @@
 # Iniciar sesión con Google
 
-En una edición habilitada por el autor:
-
 1. Pulsá **Iniciar sesión con Google** en la ventana principal.
-2. Se abre una ventanita de PZ Cloud y la página oficial de Google en tu navegador.
-3. Elegí tu cuenta y autorizá el acceso a tus respaldos.
-4. La app comprueba el permiso de Drive y la ventanita se cierra al terminar. El gestor muestra **Google Drive comprobado**. La sesión queda guardada en esta PC.
+2. Elegí tu cuenta en el navegador y autorizá el acceso a los respaldos de PZ Cloud.
+3. La app comprueba el permiso de Drive y termina la conexión. La sesión queda guardada en esta PC.
 
-No se escribe la contraseña dentro de PZ Cloud. Mientras espera la autorización, el botón principal sigue activo como **Volver a abrir Google** y reutiliza el mismo intento. Si el navegador no abre, **Copiar enlace** permite continuar en otro navegador de esta misma PC. **Cancelar** detiene el intento; al cambiar de cuenta conserva la conexión anterior si no terminaste.
+Mientras espera la autorización, **Volver a abrir Google** permite continuar el mismo ingreso. Si el navegador no abre, **Copiar enlace** permite usar otro navegador de esta misma PC. **Cancelar** detiene el intento y conserva una conexión anterior si el cambio de cuenta no terminó.
 
-Para usar la conexión guardada, elegí **Usar esta conexión**. **Elegir otra cuenta** vuelve a mostrar el selector de Google. En otra PC iniciá sesión con la misma cuenta; no copies la sesión cifrada entre equipos.
+**Usar esta conexión** comprueba la sesión guardada. **Elegir otra cuenta** vuelve a mostrar el selector de Google. Para recuperar desde otro equipo, usá la misma edición de PZ Cloud y la misma cuenta.
 
-## Si la ventana dice que el autor debe habilitar Google
+Los respaldos de Drive se consultan dentro de **Recuperar partida → En mi carpeta / nube**. Se guardan en el espacio privado de PZ Cloud de tu cuenta.
 
-Esa edición todavía no contiene la identidad registrada de PZ Cloud. No es un problema de tu cuenta. El autor debe preparar un instalable configurado siguiendo [AUTHOR_GOOGLE.md](AUTHOR_GOOGLE.md); es un paso único de la aplicación, no algo que cada usuario deba configurar.
+Si no hay Internet, tus copias permanecen en esta PC. Los envíos pendientes se reintentan al poder conectar. Si Google revocó tu autorización, volvé a iniciar sesión.
 
-**Iniciar sesión con Google** permanece accesible: al pulsarlo vuelve a comprobar la configuración y explica qué falta. **Habilitar Google (autor)** abre el asistente para registrar la app y cargar su cliente de escritorio. Activar el botón no reemplaza ese registro ni crea una sesión de Google sin autorización.
+Si Google no está disponible en la edición instalada, actualizá PZ Cloud o contactá al soporte. La conexión del programa ya viene incluida en el instalable.
 
-Si la sesión ya se guardó pero Drive no responde o no tiene permiso, la ventana sigue abierta con el motivo. **Usar esta conexión** vuelve a comprobarla sin pedir otro ingreso. Si la autorización fue revocada, usá **Elegir otra cuenta** para autorizar de nuevo.
-
-Mientras tanto siguen funcionando los respaldos locales y el modo carpeta sincronizada. La aplicación no presenta una conexión como exitosa sin recibir y guardar los tokens de Google.
-
-## Acceso y datos
-
-Se solicita únicamente `drive.appdata`: los respaldos quedan en el espacio privado de esta aplicación en tu Drive. Se ven desde **Recuperar partida → En mi carpeta / nube**, no como una carpeta común de la web de Drive. El almacenamiento pertenece a tu cuenta.
-
-La sesión usa DPAPI CurrentUser en Windows y permisos 0600 en POSIX. Desconectar elimina la sesión local, no tus respaldos remotos. Si Google revoca o vence la sesión, podés entrar otra vez desde la misma ventana.
-
-La autorización usa navegador del sistema, PKCE S256, state aleatorio y retorno loopback temporal. No agrega un motor web residente al gestor. [Documentación oficial de Google para aplicaciones de escritorio](https://developers.google.com/identity/protocols/oauth2/native-app).
-
-La ventana y el protocolo están probados con un simulador HTTP local. Registrar la aplicación y probar una cuenta real siguen siendo pasos externos necesarios.
+**Desconectar Google**, en Más opciones, elimina la sesión de esta PC y conserva los respaldos remotos.

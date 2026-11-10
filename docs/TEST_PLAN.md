@@ -4,7 +4,7 @@
 
 `bash scripts/test.sh` o `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`.
 
-83 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
+84 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
 
 - JSON, Unicode, enteros grandes, nombres portables, traversal y rutas duplicadas.
 - Binarios, directorios vacíos, manifiesto, SHA-256, CRC y contenido corrupto con CRC recompuesto.
@@ -48,3 +48,7 @@ Las pruebas incluyen configuración del autor sin importación por usuario, cons
 La suite verifica la consulta de permisos de Drive sin subir archivos, renovación tras un 401, error de API deshabilitada, respuestas incompletas y separación de tokens al importar la identidad. La prueba gráfica comprueba que una sesión sin acceso a Drive no cierre el diálogo como lista, y que el asistente rechace un cliente Web y acepte un cliente de escritorio corregido. Produce también `build/ui-google-setup.png`.
 
 El flujo principal comprueba la búsqueda desde el catálogo cargado y desactiva Guardar/Jugar al no haber coincidencias. Luego guarda y restaura la partida elegida, conservando los archivos originales. Las comprobaciones de red y OAuth de estas suites usan exclusivamente el simulador local.
+
+## Cliente de usuario 2.3
+
+Se comprueba que archivos locales de identidad, variables de entorno y propiedades de JVM no reemplacen la configuración del programa. Las sesiones del mismo cliente se conservan; las de otro ID requieren autorización y no se borran. El JAR distribuido no incluye GoogleSetupDialog ni PublisherConfig. Las pruebas gráficas comprueban que el ingreso y Más opciones no ofrezcan herramientas de autor ni importación de credenciales.

@@ -50,12 +50,12 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
         public String toString() { return name()+"   ·   "+friendlyDate(date())+"   ·   "+device()+"   ·   "+FilesEx.human(bytes()); }
     }
     public ManagerWindow(SaveManager manager,ScheduledExecutorService worker) throws IOException {
-        super("PZ Cloud · 2.2"); this.manager=manager; this.worker=worker;
+        super("PZ Cloud · 2.3"); this.manager=manager; this.worker=worker;
         theme(); service=new BackgroundService(manager,worker,this::showApp,()-> { try { loadLocal(); } catch(IOException ex) { log(ex.getMessage()); } },this::log);
         setMinimumSize(new Dimension(900,660)); setSize(1060,740); setLocationRelativeTo(null); setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         JPanel root=new JPanel(new BorderLayout(0,20)); root.setBorder(new EmptyBorder(25,28,18,28)); setContentPane(root);
         JPanel header=new JPanel(new BorderLayout(12,0)); JPanel titles=vertical();
-        JLabel brand=new JLabel("PZ CLOUD  /  2.2"); brand.setForeground(GREEN); titles.add(brand); titles.add(Box.createVerticalStrut(7));
+        JLabel brand=new JLabel("PZ CLOUD  /  2.3"); brand.setForeground(GREEN); titles.add(brand); titles.add(Box.createVerticalStrut(7));
         JLabel title=new JLabel("Tus partidas, a salvo."); title.setFont(new Font("Segoe UI",Font.BOLD,29)); titles.add(title); titles.add(Box.createVerticalStrut(7)); titles.add(muted("Guardá tu progreso. Seguí jugando donde quieras.")); header.add(titles,BorderLayout.WEST);
         JPanel settings=vertical(); connection.setForeground(GREEN); settings.add(connection); settings.add(Box.createVerticalStrut(12)); googleButton=button("Iniciar sesión con Google",this::connectDrive); settings.add(row(googleButton,button("Configuración",this::setup))); header.add(settings,BorderLayout.EAST); root.add(header,BorderLayout.NORTH);
         tabs.addTab("Mis partidas",home()); tabs.addTab("Recuperar partida",recoverPanel()); root.add(tabs,BorderLayout.CENTER);
@@ -189,15 +189,11 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
             manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); for(var world:manager.worlds()) if(world.automatic()) world.set("destination","both"); service.settingsChanged(); loadLocal(); return null;
         },v->status.setText("Google Drive comprobado. Ya podés guardar y recuperar tus partidas."))).open();
     }
-    private void authorConnection() {
-        new GoogleSetupDialog(this,manager.auth,worker,this::connectDrive,ManagerWindow::openBrowser).setVisible(true);
-    }
     private Path chooseFolder() { JFileChooser c=new JFileChooser(); c.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); return c.showOpenDialog(this)==JFileChooser.APPROVE_OPTION?c.getSelectedFile().toPath():null; }
     private void advanced() {
         JPanel p=vertical(); p.add(muted("Estas opciones no hacen falta para guardar y recuperar partidas."));
         p.add(row(dialogButton("Cambiar carpeta Zomboid…",()-> { Path target=chooseFolder(); if(target!=null) work("Cambiando carpeta…",()-> { manager.guard.requireClosed(); FilesEx.separate(target.resolve("Saves"),manager.config.home); manager.config.set("zomboid",target.toString()); loadLocal(); return null; },v->message("Carpeta actualizada. Reiniciá el gestor para actualizar el botón dentro del juego.")); }),dialogButton("Instalar botón en el juego",()->work("Instalando…",()-> { service.bridge().installMod(); return null; },v->message("Activá PZ Cloud Management en el menú Mods de Zomboid.")))));
         p.add(row(dialogButton("Abrir mis copias",()-> { try { Desktop.getDesktop().open(manager.config.archives().toFile()); } catch(IOException e) { message(e.getMessage()); } }),dialogButton("Ayuda de Google Drive",()->openBrowser(URI.create("https://github.com/SantiagoPana/PZ-Cloud-Management/blob/development/docs/GOOGLE_DRIVE.md")))));
-        p.add(row(dialogButton("Herramientas del autor…",this::authorConnection)));
         p.add(row(dialogButton("Desconectar Google",()-> { if(JOptionPane.showConfirmDialog(this,"Las copias remotas se conservan. Las nuevas subidas irán a la próxima cuenta conectada.","Desconectar",JOptionPane.OK_CANCEL_OPTION)==JOptionPane.OK_OPTION) work("Desconectando…",()-> { manager.auth.disconnect(); service.settingsChanged(); return null; },v->updateConnection()); }),dialogButton("Cerrar el gestor por completo",this::exit)));
         JOptionPane.showMessageDialog(this,p,"Más opciones",JOptionPane.PLAIN_MESSAGE);
     }
@@ -235,6 +231,6 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
     public void close() { try { service.close(); } catch(IOException ignored) {} worker.shutdownNow(); if(tray!=null) SystemTray.getSystemTray().remove(tray); dispose(); }
     private void installTray() {
         if(!SystemTray.isSupported()) return;
-        try { var image=new java.awt.image.BufferedImage(24,24,java.awt.image.BufferedImage.TYPE_INT_ARGB); var g=image.createGraphics(); g.setColor(GREEN); g.fillRoundRect(0,0,24,24,6,6); g.setColor(BG); g.setFont(new Font("SansSerif",Font.BOLD,18)); g.drawString("Z",6,19); g.dispose(); PopupMenu menu=new PopupMenu(); MenuItem show=new MenuItem("Abrir PZ Cloud"); show.addActionListener(e->showApp()); menu.add(show); MenuItem quit=new MenuItem("Salir"); quit.addActionListener(e->SwingUtilities.invokeLater(this::exit)); menu.add(quit); tray=new TrayIcon(image,"PZ Cloud 2.2",menu); tray.setImageAutoSize(true); tray.addActionListener(e->showApp()); SystemTray.getSystemTray().add(tray); } catch(AWTException ignored) {}
+        try { var image=new java.awt.image.BufferedImage(24,24,java.awt.image.BufferedImage.TYPE_INT_ARGB); var g=image.createGraphics(); g.setColor(GREEN); g.fillRoundRect(0,0,24,24,6,6); g.setColor(BG); g.setFont(new Font("SansSerif",Font.BOLD,18)); g.drawString("Z",6,19); g.dispose(); PopupMenu menu=new PopupMenu(); MenuItem show=new MenuItem("Abrir PZ Cloud"); show.addActionListener(e->showApp()); menu.add(show); MenuItem quit=new MenuItem("Salir"); quit.addActionListener(e->SwingUtilities.invokeLater(this::exit)); menu.add(quit); tray=new TrayIcon(image,"PZ Cloud 2.3",menu); tray.setImageAutoSize(true); tray.addActionListener(e->showApp()); SystemTray.getSystemTray().add(tray); } catch(AWTException ignored) {}
     }
 }

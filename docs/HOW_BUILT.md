@@ -9,7 +9,6 @@ PZ Cloud es un programa de escritorio escrito en Java. La interfaz usa Swing y e
 | `SaveManager` | Catálogo pequeño, historial, retención y cola durable de copias pendientes |
 | `GoogleAuth` | OAuth en el navegador, PKCE, callback local, sesión renovable y comprobación del permiso de Drive |
 | `GoogleDrive` | API REST de Drive v3, subidas reanudables por bloques y verificación del archivo remoto |
-| `GoogleSetupDialog` | Registro/importación guiada de la identidad del programa, una sola vez por el autor |
 | `TokenVault` | Sesión protegida con DPAPI del usuario de Windows; archivo privado en POSIX |
 | `BackgroundService` | Eventos de archivos, un trabajador de baja prioridad y reintentos solo si hay pendientes |
 | Mod Lua opcional | Botón dentro de Zomboid y solicitudes al programa externo mediante archivos |
@@ -21,3 +20,6 @@ La búsqueda trabaja sobre los nombres ya cargados y no vuelve a recorrer los ar
 Google recibe el ingreso en su propio navegador. El programa intercambia la autorización por una sesión, comprueba el acceso al espacio de respaldos y guarda la sesión para renovarla después. Hace falta que el autor registre un cliente OAuth de escritorio de PZ Cloud y habilite Drive API. El código implementado y las pruebas con simulador no crean ese registro ni prueban una cuenta real por sí solos. Ver [AUTHOR_GOOGLE.md](AUTHOR_GOOGLE.md).
 
 El repositorio está dividido en `src/main/java`, `src/test/java`, `mod`, `scripts` y `docs`. GitHub Actions compila, prueba en Windows y Linux, ejecuta los recorridos gráficos y genera el portable. Las pruebas trabajan con partidas ficticias; sigue pendiente la aceptación con la cuenta Google del autor y una partida descartable cargada dentro de Zomboid.
+
+
+Desde la 2.3, las herramientas del autor solo participan en la compilación. El cliente de usuario usa el recurso incluido y no ofrece importación de archivos ni reemplazos de identidad en ejecución.
