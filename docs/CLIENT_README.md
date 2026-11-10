@@ -11,7 +11,7 @@ Tus partidas, a salvo. Abrí **KnoxNet.exe**, iniciá sesión con Google y autor
 3. Para traer una copia, usá **Recuperar partida → En mi carpeta / nube**.
 4. En otra PC, abrí esta misma edición e iniciá sesión con la misma cuenta.
 
-Usá **Minimizar a la bandeja** para mantener Knox Net en segundo plano y volver desde el icono junto al reloj. **Salir** desde la bandeja cierra la aplicación.
+Usá **Minimizar a la bandeja** para mantener Knox Net en segundo plano y volver desde el icono junto al reloj. **Salir** desde la bandeja o la **X** de la ventana cierran completamente la aplicación. Una operación de copia activa termina de forma segura antes de salir.
 
 Podés activar **Guardar automáticamente al cerrar Zomboid**. El respaldo automático espera a que el juego se cierre completamente. **Enviar pendientes** permite reintentar los envíos cuando vuelve la conexión.
 
