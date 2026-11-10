@@ -94,6 +94,9 @@ jobs:
       - name: Launch packaged Windows runtime with isolated Google fixture
         shell: pwsh
         run: ./scripts/test-native-windows.ps1
+      - name: Inspect executable integrity, signing and Defender availability
+        shell: pwsh
+        run: ./scripts/check-windows-security.ps1
       - name: Identify downloadable edition
         id: edition
         shell: pwsh
