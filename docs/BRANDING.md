@@ -22,4 +22,4 @@ El ID `KNManagement` conserva la elección del autor en `mod.info`. Si antes usa
 
 GitHub Actions genera `KnoxNet-2.3.5-Windows-Google` cuando el cliente de Google del autor está incluido, y `KnoxNet-Workshop-2.3.5` para el mod. Las ediciones sin conexión incluida se identifican como `Preview-local-only`.
 
-La release `v2.3.5` distribuye el ejecutable nuevo y un ZIP de Workshop listo para cargar desde el juego. Las releases `v2.3.1` y `v2.3.2` no se modifican. Publicar el ZIP en GitHub no publica automáticamente el artículo en Steam Workshop: ese paso requiere la sesión del autor en Steam.
+La versión 2.3.5 se prueba desde los artefactos de GitHub Actions hasta publicar una release nueva. Las versiones `v2.3.1`, `v2.3.2` y `v2.3.4` no se modifican. Publicar el ZIP en GitHub no publica automáticamente el artículo en Steam Workshop: ese paso requiere la sesión del autor en Steam.
