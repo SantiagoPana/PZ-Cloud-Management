@@ -7,13 +7,15 @@ En una edición habilitada por el autor:
 3. Elegí tu cuenta y autorizá el acceso a tus respaldos.
 4. La ventanita se cierra al terminar y el gestor muestra **Google Drive conectado**. La sesión queda guardada en esta PC.
 
-No se escribe la contraseña dentro de PZ Cloud. Si cerraste el navegador antes de terminar, usá **Volver a abrir Google**. Si el navegador no abre, **Copiar enlace** permite continuar en otro navegador de esta misma PC. **Cancelar** detiene el intento; al cambiar de cuenta conserva la conexión anterior si no terminaste.
+No se escribe la contraseña dentro de PZ Cloud. Mientras espera la autorización, el botón principal sigue activo como **Volver a abrir Google** y reutiliza el mismo intento. Si el navegador no abre, **Copiar enlace** permite continuar en otro navegador de esta misma PC. **Cancelar** detiene el intento; al cambiar de cuenta conserva la conexión anterior si no terminaste.
 
 Para usar la conexión guardada, elegí **Usar esta conexión**. **Elegir otra cuenta** vuelve a mostrar el selector de Google. En otra PC iniciá sesión con la misma cuenta; no copies la sesión cifrada entre equipos.
 
 ## Si la ventana dice que el autor debe habilitar Google
 
 Esa edición todavía no contiene la identidad registrada de PZ Cloud. No es un problema de tu cuenta. El autor debe preparar un instalable configurado siguiendo [AUTHOR_GOOGLE.md](AUTHOR_GOOGLE.md); es un paso único de la aplicación, no algo que cada usuario deba configurar.
+
+**Iniciar sesión con Google** permanece accesible: al pulsarlo vuelve a comprobar la configuración y explica qué falta, con **Ayuda para conectar** para abrir los pasos del autor. Activar el botón no reemplaza ese registro ni crea una sesión de Google sin autorización.
 
 Mientras tanto siguen funcionando los respaldos locales y el modo carpeta sincronizada. La aplicación no presenta una conexión como exitosa sin recibir y guardar los tokens de Google.
 

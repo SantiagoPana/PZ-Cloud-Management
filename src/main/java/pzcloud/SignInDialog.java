@@ -19,7 +19,7 @@ public final class SignInDialog extends JDialog {
     private final Runnable connected;
     private final Browser browser;
     private final JTextArea description=text(3),status=text(3);
-    private final JButton login=new JButton("Iniciar sesión con Google"),cancel=new JButton("Cancelar"),reopen=new JButton("Volver a abrir Google"),copy=new JButton("Copiar enlace"),change=new JButton("Elegir otra cuenta");
+    private final JButton login=new JButton("Iniciar sesión con Google"),cancel=new JButton("Cancelar"),copy=new JButton("Copiar enlace"),change=new JButton("Elegir otra cuenta"),help=new JButton("Ayuda para conectar");
     private final JPanel links=new JPanel(new FlowLayout(FlowLayout.CENTER,8,4));
     private final AtomicBoolean started=new AtomicBoolean(),finishing=new AtomicBoolean();
     private Future<?> task;
@@ -38,12 +38,13 @@ public final class SignInDialog extends JDialog {
         JLabel title=new JLabel("Conectá tu cuenta de Google"); title.setFont(new Font("Segoe UI",Font.BOLD,22)); title.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(title); root.add(Box.createVerticalStrut(14));
         description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a PZ Cloud."); root.add(description); root.add(Box.createVerticalStrut(14));
         login.setFont(new Font("Segoe UI",Font.BOLD,15)); login.setBackground(Color.WHITE); login.setForeground(new Color(38,46,48)); login.setMargin(new Insets(12,18,12,18)); login.setFocusPainted(false); login.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(login); root.add(Box.createVerticalStrut(14));
-        root.add(status); links.add(reopen); links.add(copy); links.setVisible(false); root.add(links);
+        root.add(status); links.add(copy); links.add(help); links.setVisible(false); root.add(links);
         JPanel bottom=new JPanel(new FlowLayout(FlowLayout.CENTER,10,0)); bottom.add(change); bottom.add(cancel); root.add(Box.createVerticalStrut(8)); root.add(bottom);
-        for(JButton button:new JButton[]{cancel,reopen,copy,change}) button.setFocusPainted(false);
-        login.addActionListener(e->{ if(auth.connected()&&!running) finish(); else begin(); });
+        for(JButton button:new JButton[]{cancel,copy,change,help}) button.setFocusPainted(false);
+        login.addActionListener(e->{ if(running) openBrowser(); else if(auth.connected()) finish(); else begin(); });
         change.addActionListener(e->begin()); cancel.addActionListener(e->cancel());
-        reopen.addActionListener(e->openBrowser()); copy.addActionListener(e->{ if(address!=null) { Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(address.toString()),null); status.setText("Enlace copiado. Abrilo en tu navegador y elegí tu cuenta."); } });
+        copy.addActionListener(e->{ if(address!=null) { Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(address.toString()),null); status.setText("Enlace copiado. Abrilo en tu navegador y elegí tu cuenta."); } });
+        help.addActionListener(e->{ try { browser.open(URI.create("https://github.com/SantiagoPana/PZ-Cloud-Management/blob/development/docs/AUTHOR_GOOGLE.md")); } catch(Exception ex) { status.setText("No se pudo abrir la ayuda. Consultá docs/AUTHOR_GOOGLE.md en la carpeta del programa."); } });
         addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent e) { cancel(); } });
         ready(); pack(); setLocationRelativeTo(owner);
     }
@@ -51,10 +52,11 @@ public final class SignInDialog extends JDialog {
         JTextArea text=new JTextArea(rows,43); text.setEditable(false); text.setFocusable(false); text.setLineWrap(true); text.setWrapStyleWord(true); text.setBorder(null); text.setBackground(UIManager.getColor("Panel.background")); text.setForeground(UIManager.getColor("Label.foreground")); text.setFont(new Font("Segoe UI",Font.PLAIN,14)); return text;
     }
     private void ready() {
-        boolean configured=auth.configured(),existing=auth.connected(); login.setEnabled(configured||existing); change.setVisible(existing&&configured); cancel.setEnabled(true); cancel.setText(existing?"Cerrar":"Cancelar");
+        boolean configured=auth.configured(),existing=auth.connected(); login.setEnabled(true); change.setVisible(existing&&configured); change.setEnabled(true); cancel.setEnabled(true); cancel.setText(existing?"Cerrar":"Cancelar");
+        copy.setEnabled(true); copy.setVisible(false); help.setVisible(!configured&&!existing); links.setVisible(help.isVisible());
         login.setText(existing?"Usar esta conexión":"Iniciar sesión con Google");
         if(existing) status.setText("Tu conexión de Google ya está guardada en esta PC.");
-        else if(!configured) { description.setText(auth.configurationProblem()); status.setText("Falta habilitar Google para esta aplicación. No necesitás buscar un archivo ni configurar una cuenta de desarrollador."); cancel.setText("Cerrar"); }
+        else if(!configured) { description.setText(auth.configurationProblem()); status.setText("Podés volver a intentar la conexión o abrir la ayuda. Tus respaldos locales siguen disponibles."); cancel.setText("Cerrar"); }
         else status.setText(auth.sessionProblem().isBlank()?"La sesión se guarda para que no tengas que repetir este paso.":auth.sessionProblem());
     }
     /** One click from the main app opens this window and launches the official account chooser. */
@@ -63,18 +65,19 @@ public final class SignInDialog extends JDialog {
         setVisible(true);
     }
     private void begin() {
-        if(running||dismissed||!auth.configured()) return;
-        running=true; started.set(false); finishing.set(false); login.setEnabled(false); change.setEnabled(false); cancel.setText("Cancelar"); cancel.setEnabled(true); status.setText("Preparando el inicio de sesión…");
+        if(running||dismissed) return;
+        if(!auth.configured()) { ready(); status.setText("Para conectar tu cuenta, el autor debe habilitar Google una sola vez para esta aplicación. Pulsá Ayuda para conectar para ver los pasos."); pack(); return; }
+        running=true; started.set(false); finishing.set(false); login.setEnabled(false); login.setText("Preparando conexión…"); change.setEnabled(false); cancel.setText("Cancelar"); cancel.setEnabled(true); status.setText("Preparando el inicio de sesión…");
         task=worker.submit(()-> {
             started.set(true);
             try {
                 auth.connect(uri->SwingUtilities.invokeLater(()-> {
-                    if(dismissed) return; address=uri; links.setVisible(true); pack(); status.setText("Terminá de iniciar sesión en la pantalla de Google. Esta ventana se cierra al conectar."); openBrowser();
+                    if(dismissed) return; address=uri; copy.setVisible(true); help.setVisible(false); links.setVisible(true); login.setText("Volver a abrir Google"); login.setEnabled(true); pack(); status.setText("Terminá de iniciar sesión en la pantalla de Google. Esta ventana se cierra al conectar."); openBrowser();
                 }),phase->{
                     if(phase.equals("committing")) finishing.set(true);
                     SwingUtilities.invokeLater(()-> {
                         if(dismissed) return;
-                        if(phase.equals("exchanging")) status.setText("Google respondió. Terminando la conexión…");
+                        if(phase.equals("exchanging")) { status.setText("Google respondió. Terminando la conexión…"); login.setText("Conectando…"); login.setEnabled(false); copy.setEnabled(false); }
                         if(phase.equals("committing")) { status.setText("Guardando tu conexión en esta PC…"); cancel.setEnabled(false); }
                     });
                 });
