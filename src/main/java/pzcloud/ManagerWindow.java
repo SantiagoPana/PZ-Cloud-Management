@@ -50,12 +50,12 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
         public String toString() { return name()+"   ·   "+friendlyDate(date())+"   ·   "+device()+"   ·   "+FilesEx.human(bytes()); }
     }
     public ManagerWindow(SaveManager manager,ScheduledExecutorService worker) throws IOException {
-        super("PZ Cloud · 2.3"); this.manager=manager; this.worker=worker;
+        super("PZ Cloud · "+Installation.VERSION+(manager.auth.configured()?" · Google incluido":" · Solo copias locales")); this.manager=manager; this.worker=worker;
         theme(); service=new BackgroundService(manager,worker,this::showApp,()-> { try { loadLocal(); } catch(IOException ex) { log(ex.getMessage()); } },this::log);
         setMinimumSize(new Dimension(900,660)); setSize(1060,740); setLocationRelativeTo(null); setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         JPanel root=new JPanel(new BorderLayout(0,20)); root.setBorder(new EmptyBorder(25,28,18,28)); setContentPane(root);
         JPanel header=new JPanel(new BorderLayout(12,0)); JPanel titles=vertical();
-        JLabel brand=new JLabel("PZ CLOUD  /  2.3"); brand.setForeground(GREEN); titles.add(brand); titles.add(Box.createVerticalStrut(7));
+        JLabel brand=new JLabel("PZ CLOUD  /  "+Installation.VERSION); brand.setForeground(GREEN); titles.add(brand); titles.add(Box.createVerticalStrut(7));
         JLabel title=new JLabel("Tus partidas, a salvo."); title.setFont(new Font("Segoe UI",Font.BOLD,29)); titles.add(title); titles.add(Box.createVerticalStrut(7)); titles.add(muted("Guardá tu progreso. Seguí jugando donde quieras.")); header.add(titles,BorderLayout.WEST);
         JPanel settings=vertical(); connection.setForeground(GREEN); settings.add(connection); settings.add(Box.createVerticalStrut(12)); googleButton=button("Iniciar sesión con Google",this::connectDrive); settings.add(row(googleButton,button("Configuración",this::setup))); header.add(settings,BorderLayout.EAST); root.add(header,BorderLayout.NORTH);
         tabs.addTab("Mis partidas",home()); tabs.addTab("Recuperar partida",recoverPanel()); root.add(tabs,BorderLayout.CENTER);
@@ -231,6 +231,6 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
     public void close() { try { service.close(); } catch(IOException ignored) {} worker.shutdownNow(); if(tray!=null) SystemTray.getSystemTray().remove(tray); dispose(); }
     private void installTray() {
         if(!SystemTray.isSupported()) return;
-        try { var image=new java.awt.image.BufferedImage(24,24,java.awt.image.BufferedImage.TYPE_INT_ARGB); var g=image.createGraphics(); g.setColor(GREEN); g.fillRoundRect(0,0,24,24,6,6); g.setColor(BG); g.setFont(new Font("SansSerif",Font.BOLD,18)); g.drawString("Z",6,19); g.dispose(); PopupMenu menu=new PopupMenu(); MenuItem show=new MenuItem("Abrir PZ Cloud"); show.addActionListener(e->showApp()); menu.add(show); MenuItem quit=new MenuItem("Salir"); quit.addActionListener(e->SwingUtilities.invokeLater(this::exit)); menu.add(quit); tray=new TrayIcon(image,"PZ Cloud 2.3",menu); tray.setImageAutoSize(true); tray.addActionListener(e->showApp()); SystemTray.getSystemTray().add(tray); } catch(AWTException ignored) {}
+        try { var image=new java.awt.image.BufferedImage(24,24,java.awt.image.BufferedImage.TYPE_INT_ARGB); var g=image.createGraphics(); g.setColor(GREEN); g.fillRoundRect(0,0,24,24,6,6); g.setColor(BG); g.setFont(new Font("SansSerif",Font.BOLD,18)); g.drawString("Z",6,19); g.dispose(); PopupMenu menu=new PopupMenu(); MenuItem show=new MenuItem("Abrir PZ Cloud"); show.addActionListener(e->showApp()); menu.add(show); MenuItem quit=new MenuItem("Salir"); quit.addActionListener(e->SwingUtilities.invokeLater(this::exit)); menu.add(quit); tray=new TrayIcon(image,"PZ Cloud 2.3.1",menu); tray.setImageAutoSize(true); tray.addActionListener(e->showApp()); SystemTray.getSystemTray().add(tray); } catch(AWTException ignored) {}
     }
 }

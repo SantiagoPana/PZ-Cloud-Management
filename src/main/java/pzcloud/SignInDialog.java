@@ -21,7 +21,7 @@ public final class SignInDialog extends JDialog {
     private final Browser browser;
     private final AccessCheck check;
     private final JTextArea description=text(3),status=text(3);
-    private final JButton login=new JButton("Iniciar sesión con Google"),cancel=new JButton("Cancelar"),copy=new JButton("Copiar enlace"),change=new JButton("Elegir otra cuenta");
+    private final JButton login=new JButton("Iniciar sesión con Google"),cancel=new JButton("Cancelar"),copy=new JButton("Copiar enlace"),change=new JButton("Elegir otra cuenta"),details=new JButton("Información de esta instalación");
     private final JPanel links=new JPanel(new FlowLayout(FlowLayout.CENTER,8,4));
     private final AtomicBoolean started=new AtomicBoolean(),finishing=new AtomicBoolean();
     private Future<?> task;
@@ -43,11 +43,12 @@ public final class SignInDialog extends JDialog {
         JLabel title=new JLabel("Conectá tu cuenta de Google"); title.setFont(new Font("Segoe UI",Font.BOLD,22)); title.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(title); root.add(Box.createVerticalStrut(14));
         description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a PZ Cloud."); root.add(description); root.add(Box.createVerticalStrut(14));
         login.setFont(new Font("Segoe UI",Font.BOLD,15)); login.setBackground(Color.WHITE); login.setForeground(new Color(38,46,48)); login.setMargin(new Insets(12,18,12,18)); login.setFocusPainted(false); login.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(login); root.add(Box.createVerticalStrut(14));
-        root.add(status); links.add(copy); links.setVisible(false); root.add(links);
+        root.add(status); links.add(copy); links.add(details); links.setVisible(false); root.add(links);
         JPanel bottom=new JPanel(new FlowLayout(FlowLayout.CENTER,10,0)); bottom.add(change); bottom.add(cancel); root.add(Box.createVerticalStrut(8)); root.add(bottom);
         for(JButton button:new JButton[]{cancel,copy,change}) button.setFocusPainted(false);
         login.addActionListener(e->{ if(running) openBrowser(); else if(auth.connected()) start(false); else begin(); });
         change.addActionListener(e->begin()); cancel.addActionListener(e->cancel());
+        details.addActionListener(e->{ JTextArea info=new JTextArea(Installation.describe(auth),6,55); info.setEditable(false); info.setLineWrap(true); info.setWrapStyleWord(true); JOptionPane.showMessageDialog(this,new JScrollPane(info),"Información de PZ Cloud",JOptionPane.INFORMATION_MESSAGE); });
         copy.addActionListener(e->{ if(address!=null) { Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(address.toString()),null); status.setText("Enlace copiado. Abrilo en tu navegador y elegí tu cuenta."); } });
         addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent e) { cancel(); } });
         ready(); pack(); setLocationRelativeTo(owner);
@@ -57,7 +58,7 @@ public final class SignInDialog extends JDialog {
     }
     private void ready() {
         boolean configured=auth.configured(),existing=auth.connected(); login.setEnabled(true); change.setVisible(existing&&configured); change.setEnabled(true); cancel.setEnabled(true); cancel.setText(existing?"Cerrar":"Cancelar");
-        copy.setEnabled(true); copy.setVisible(false); links.setVisible(false);
+        copy.setEnabled(true); copy.setVisible(false); details.setVisible(!configured); links.setVisible(!configured);
         login.setText(existing?"Usar esta conexión":"Iniciar sesión con Google");
         description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a PZ Cloud.");
         if(existing) status.setText("Tu sesión está guardada. Al usarla, comprobamos que Google Drive responda.");
@@ -71,7 +72,7 @@ public final class SignInDialog extends JDialog {
     }
     private void begin() {
         if(running||dismissed) return;
-        if(!auth.configured()) { ready(); status.setText(auth.configurationProblem()); pack(); return; }
+        if(!auth.configured()) { ready(); status.setText("Código "+auth.configurationDiagnostic()+". Revisá Información de esta instalación para identificar la edición que se abrió."); pack(); return; }
         start(true);
     }
     private void start(boolean authorize) {

@@ -40,7 +40,7 @@ public final class SelfTest {
                 Process probe=new ProcessBuilder(java,"-Dtest.pz.marker=zombie.GameWindow","-cp",System.getProperty("java.class.path"),SelfTest.class.getName(),"process-probe").start();
                 try { eq(new BufferedReader(new InputStreamReader(probe.getInputStream())).readLine(),"READY"); ok(new GameGuard().running()); } finally { probe.getOutputStream().close(); if(!probe.waitFor(5,TimeUnit.SECONDS)) probe.destroyForcibly(); }
             });
-            jsonTests(); archiveTests(); managerTests(); v2Tests(); cloudTests(); authTests(); signInTests();
+            jsonTests(); instanceTests(); archiveTests(); managerTests(); v2Tests(); cloudTests(); authTests(); signInTests();
             System.out.println("OK: "+passed+" integration tests; no real game saves or Google account accessed.");
         } finally { FilesEx.deleteTree(root); }
     }
@@ -48,6 +48,21 @@ public final class SelfTest {
         test("JSON Unicode/escapes and large integer round trip",()-> { Map<String,Object> map=Map.of("name","á\n\\\"🧟","size",9007199254740993L,"empty",List.of()); eq(Json.object(Json.parse(Json.encode(map))),map); });
         test("Reject duplicate JSON keys and malformed values",()-> { for(String s:List.of("{\"x\":1,\"x\":2}","[1,]","01","true false","\"\\uZZZZ\"","{\"x\":}")) fails(()->Json.parse(s)); });
         test("Portable safe paths reject traversal, ADS, device names",()-> { for(String s:List.of("../x","/etc/file","a//b","a\\b","file:stream","CON.txt","trailing.","trailing ","a/../b")) fails(()->FilesEx.safeRelative(s)); FilesEx.safeRelative("nested/área.txt"); });
+    }
+    static void instanceTests() throws Exception {
+        test("Identical installed builds may reuse a running instance",()-> {
+            Path home=dir("instances/same"); try(AppInstance first=AppInstance.acquire(home,"build-one")) { ok(first.owned()); try(AppInstance second=AppInstance.acquire(home,"build-one")) { ok(!second.owned()); ok(second.matching()); } ok(Files.exists(home.resolve("manager.instance.json"))); }
+            try(AppInstance next=AppInstance.acquire(home,"build-one")) { ok(next.owned()); } ok(!Files.exists(home.resolve("manager.instance.json")));
+        });
+        test("A different Google bundle cannot silently reuse another build",()-> {
+            Path home=dir("instances/different"); try(AppInstance first=AppInstance.acquire(home,"local-only-build")) { try(AppInstance next=AppInstance.acquire(home,"google-included-build")) { ok(!next.owned()); ok(!next.matching()); } eq(Json.str(FilesEx.readJson(home.resolve("manager.instance.json")),"fingerprint"),"local-only-build"); }
+        });
+        test("An older process without installation metadata requires closing explicitly",()-> {
+            Path home=dir("instances/legacy"); try(var channel=java.nio.channels.FileChannel.open(home.resolve("manager.lock"),StandardOpenOption.CREATE,StandardOpenOption.WRITE); var lock=channel.lock(); AppInstance incoming=AppInstance.acquire(home,"new-build")) { ok(!incoming.owned()); ok(!incoming.matching()); ok(lock.isValid()); }
+        });
+        test("Installation diagnostics work without a user session and contain no OAuth secrets",()-> {
+            Path output=dir("instances/report").resolve("installation.json"); Installation.writeDiagnostic(output); var report=FilesEx.readJson(output); eq(Json.str(report,"version"),Installation.VERSION); eq(Json.str(report,"personalSessionCreated"),"false"); String raw=Files.readString(output); ok(!raw.contains("client_secret")); ok(!raw.contains("refresh_token")); ok(!raw.contains("access_token")); ok(report.containsKey("application")); ok(report.containsKey("build"));
+        });
     }
     static void archiveTests() throws Exception {
         Guard guard=new Guard(); ArchiveEngine engine=new ArchiveEngine(guard,s->{}); Path source=world("archive/source");

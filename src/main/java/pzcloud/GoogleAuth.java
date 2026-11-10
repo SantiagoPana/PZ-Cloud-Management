@@ -21,6 +21,7 @@ public final class GoogleAuth {
     private final URI tokenEndpoint;
     private final Duration loginTimeout;
     private final Map<String,Object> applicationClient;
+    private final String configurationDiagnostic;
     private final AtomicReference<Attempt> connecting=new AtomicReference<>();
     private Map<String,Object> token;
     private HttpClient http;
@@ -36,9 +37,11 @@ public final class GoogleAuth {
     GoogleAuth(Path home,URI endpoint,Duration timeout,ClientSource defaults) throws IOException {
         vault=new TokenVault(home.resolve("google-session.token"));
         tokenEndpoint=endpoint; loginTimeout=timeout;
-        Map<String,Object> bundled;
-        try { bundled=Map.copyOf(validateClient(defaults.load())); } catch(IOException ex) { bundled=Map.of(); }
+        Map<String,Object> bundled; String diagnostic="Configuración incluida y válida";
+        try { var document=defaults.load(); if(document.isEmpty()) diagnostic="PG001: esta instalación no incluye la conexión de Google"; bundled=Map.copyOf(validateClient(document)); }
+        catch(IOException ex) { bundled=Map.of(); if(!diagnostic.startsWith("PG001")) diagnostic="PG002: no se pudo leer una configuración de Google válida"; }
         applicationClient=bundled;
+        configurationDiagnostic=diagnostic;
         try { token=vault.read(); } catch(IOException ex) { token=new LinkedHashMap<>(); sessionProblem="La sesión anterior necesita volver a conectarse."; }
         if(!Json.str(token,"refresh_token").isBlank()&&!Json.str(token,"client_id").equals(Json.str(applicationClient,"client_id"))) sessionProblem="Volvé a iniciar sesión para usar la conexión de esta versión de PZ Cloud.";
     }
@@ -48,6 +51,7 @@ public final class GoogleAuth {
     public boolean isConnecting() { return connecting.get()!=null; }
     public boolean configured() { try { client(); return true; } catch(IOException ex) { return false; } }
     public String sessionProblem() { return sessionProblem; }
+    public String configurationDiagnostic() { return configurationDiagnostic; }
     public String configurationProblem() {
         try { client(); return ""; }
         catch(IOException ex) { return "Google no está disponible en esta edición. Actualizá PZ Cloud para conectar tu cuenta. Tus copias locales siguen disponibles."; }

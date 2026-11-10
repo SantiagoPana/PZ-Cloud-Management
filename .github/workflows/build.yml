@@ -71,9 +71,19 @@ jobs:
         env:
           PZCLOUD_GOOGLE_CLIENT_JSON: ${{ secrets.PZCLOUD_GOOGLE_CLIENT_JSON }}
         run: ./scripts/build.ps1 -Package
+      - name: Launch packaged Windows runtime with isolated Google fixture
+        shell: pwsh
+        run: ./scripts/test-native-windows.ps1
+      - name: Identify downloadable edition
+        id: edition
+        shell: pwsh
+        run: |
+          $status = Get-Content build/portable/PZCloudManagement/GOOGLE_AUTH_STATUS.json -Raw | ConvertFrom-Json
+          $edition = if ($status.googleClientBundled) { 'Windows-Google' } else { 'Preview-local-only' }
+          "name=PZCloudManagement-2.3.1-$edition" >> $env:GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         with:
-          name: PZCloudManagement-2.3-Windows-x64
+          name: ${{ steps.edition.outputs.name }}
           path: build/portable/PZCloudManagement/
           if-no-files-found: error
           retention-days: 30

@@ -44,3 +44,7 @@ El modo carpeta publica `PZCloud-<snapshotId>.zip` y `PZCloud-<snapshotId>.json`
 El cliente lee únicamente `/auth/google-client.json` desde el JAR. La identidad se carga una vez en memoria y no se sustituye por archivos de la carpeta de datos, propiedades de JVM o variables de entorno. Las sesiones para el mismo cliente mantienen compatibilidad; si el ID difiere, se pide volver a autorizar y se conserva la sesión previa hasta completar un nuevo ingreso.
 
 `GOOGLE_AUTH_STATUS.json` contiene versión y estado de inclusión. No contiene IDs, secretos ni tokens. Una edición sin configuración pide actualizar el programa y conserva disponibles las copias locales. El publicador y las guías de autor quedan fuera del portable.
+
+## Identificación de instancia e instalación
+
+`manager.lock` mantiene la exclusión de instancias. `manager.instance.json` identifica al propietario mediante UUID, PID, versión y huella del JAR; se elimina al salir. Una instancia sin marcador o con otra huella no puede reutilizarse silenciosamente. `diagnose <archivo>` produce un informe con versión, ruta, huella y disponibilidad de la configuración incluida; no contiene IDs de cliente, secretos ni tokens.

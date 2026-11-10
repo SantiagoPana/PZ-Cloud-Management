@@ -1,4 +1,4 @@
-# PZ Cloud 2.3
+# PZ Cloud 2.3.1
 
 **Guardá tu partida. Recuperala en otra PC.** Aplicación de escritorio en español para partidas de un jugador de Project Zomboid B42. Autor: Santiago Martin.
 
@@ -12,7 +12,7 @@ Las herramientas de compilación y su configuración son para el desarrollador y
 
 ## Empezar
 
-Descargá `PZCloudManagement-2.3-Windows-x64` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
+Descargá `PZCloudManagement-2.3.1-Windows-Google` del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraelo completo y abrí **PZCloudManagement.exe**. Java viene incluido.
 
 1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o **Google Drive directo** si tu edición ya lo trae habilitado.
 2. Elegí la partida y pulsá **Guardar partida**. Activá **Guardar automáticamente al cerrar Zomboid** si querés protección automática.
@@ -51,9 +51,9 @@ Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC
 
 ## Compatibilidad y estado
 
-**2.3.0-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
+**2.3.1-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
 
-84 pruebas automáticas con mundos ficticios y simulador HTTP local, más pruebas gráficas de configurar/guardar/recuperar y de la ventana de inicio de sesión con un simulador local. Ninguna prueba automatizada conecta una cuenta real. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
+88 pruebas automáticas con mundos ficticios y simulador HTTP local, más pruebas gráficas de configurar/guardar/recuperar y de la ventana de inicio de sesión con un simulador local. Ninguna prueba automatizada conecta una cuenta real. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
 
 Solo un jugador; no servidores dedicados ni partidas multijugador alojadas. Usá las mismas builds y mods para cargar una copia en otra PC. Volver al menú no cierra el proceso: el respaldo automático espera a salir completamente de Zomboid.
 
@@ -73,3 +73,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 [Arquitectura](docs/ARCHITECTURE.md) · [Formato](docs/FORMAT.md) · [Google directo](docs/GOOGLE_DRIVE.md) · [Pruebas](docs/TEST_PLAN.md) · [Privacidad](docs/PRIVACY.md).
 
 [Cómo está hecha la aplicación](docs/HOW_BUILT.md).
+
+## Identificación de instalaciones en la 2.3.1
+
+La ventana diferencia Google incluido de Solo copias locales. Una edición nueva no reutiliza silenciosamente otra compilación que ya estaba abierta. El comando `diagnose <archivo>` comprueba el ejecutable/JAR actual sin abrir una cuenta ni tocar la configuración personal. Los artefactos de CI sin cliente se identifican como `Preview-local-only`. La prueba de Windows arranca una copia aislada del ejecutable con su runtime privado y una identidad de prueba incluida, sin contactar a Google ni modificar el portable distribuido.

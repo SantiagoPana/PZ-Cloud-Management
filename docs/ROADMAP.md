@@ -1,4 +1,4 @@
-# Estado 2.3.0-alpha.1
+# Estado 2.3.1-alpha.1
 
 ## Implementado y probado
 
@@ -19,7 +19,7 @@
 - [x] Trabajo por eventos, reposo manual sin sondeos y reintentos con espera creciente.
 - [x] Buffers reutilizados, dos hashes en una lectura y clientes HTTP diferidos.
 - [x] Cola durable, transferencias reanudables, restauración con respaldo previo y recuperación de interrupciones.
-- [x] 84 pruebas de integración y flujo gráfico de configurar/guardar/recuperar.
+- [x] 88 pruebas de integración y flujo gráfico de configurar/guardar/recuperar.
 - [x] Comparación reproducible de consumo con la 1.0.
 - [x] Workflow de Windows/Linux y portable Windows con Java comprimido.
 

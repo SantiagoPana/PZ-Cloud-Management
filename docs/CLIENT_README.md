@@ -1,4 +1,4 @@
-# PZ Cloud 2.3
+# PZ Cloud 2.3.1
 
 Tus partidas, a salvo. Abrí **PZCloudManagement.exe**, iniciá sesión con Google y autorizá el acceso a tus respaldos. Java viene incluido.
 
@@ -16,3 +16,5 @@ Para recuperar un mundo usá una versión de Zomboid y mods compatibles. La app 
 [Guía de uso](docs/QUICKSTART.md) · [Iniciar sesión](docs/GOOGLE_DRIVE.md) · [Privacidad](docs/PRIVACY.md).
 
 Soporte: https://github.com/SantiagoPana/PZ-Cloud-Management/issues
+
+El título de la ventana identifica la edición: **2.3.1 · Google incluido**. Si ya estaba abierta otra edición, usá en ella Configuración → Más opciones → Cerrar el gestor por completo, y después abrí esta versión.

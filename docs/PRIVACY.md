@@ -13,3 +13,5 @@ Desconectar elimina la sesión de esta instalación; no revoca el proyecto enter
 El modo local y el modo carpeta no crean un cliente HTTP. El gestor no registra líneas de comandos de otros programas ni envía información de procesos; las consultas locales se usan para reconocer el estado de Zomboid.
 
 La ventana de inicio de sesión no recibe un nombre de usuario ni una contraseña. Abre el navegador del sistema y recibe un código de autorización mediante un listener local temporal que se cierra al terminar, cancelar o vencer. La sesión anterior se conserva si se cancela un cambio de cuenta. La configuración pública del cliente de escritorio puede venir incluida por el autor; eso no incluye la sesión personal del autor.
+
+La información de instalación muestra versión, ruta del programa, huella y estado de conexión incluida. No incorpora secretos ni tokens. Solo se guarda un informe de diagnóstico cuando se solicita; revisá las rutas locales antes de compartirlo.

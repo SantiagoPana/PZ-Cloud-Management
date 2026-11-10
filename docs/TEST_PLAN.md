@@ -4,7 +4,7 @@
 
 `bash scripts/test.sh` o `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`.
 
-84 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
+88 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
 
 - JSON, Unicode, enteros grandes, nombres portables, traversal y rutas duplicadas.
 - Binarios, directorios vacíos, manifiesto, SHA-256, CRC y contenido corrupto con CRC recompuesto.
@@ -52,3 +52,7 @@ El flujo principal comprueba la búsqueda desde el catálogo cargado y desactiva
 ## Cliente de usuario 2.3
 
 Se comprueba que archivos locales de identidad, variables de entorno y propiedades de JVM no reemplacen la configuración del programa. Las sesiones del mismo cliente se conservan; las de otro ID requieren autorización y no se borran. El JAR distribuido no incluye GoogleSetupDialog ni PublisherConfig. Las pruebas gráficas comprueban que el ingreso y Más opciones no ofrezcan herramientas de autor ni importación de credenciales.
+
+## Instalación 2.3.1
+
+Se prueban instancias de una misma compilación, una compilación distinta y una instancia antigua sin metadatos. Solo una compilación idéntica puede reutilizar la ventana existente. El diagnóstico de instalación no crea sesiones personales ni incluye IDs o secretos OAuth. `test-native-windows.ps1` ejecuta el EXE generado por jpackage con una identidad descartable en una copia aislada, verifica el recurso desde el runtime privado y comprueba que el paquete original no haya sido modificado. No usa una cuenta real.

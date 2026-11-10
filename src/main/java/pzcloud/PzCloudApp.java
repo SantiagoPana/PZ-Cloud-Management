@@ -2,7 +2,6 @@ package pzcloud;
 
 import javax.swing.*;
 import java.io.*;
-import java.nio.channels.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -20,15 +19,17 @@ public final class PzCloudApp {
         }
     }
     private static void launch(String[] args) throws Exception {
+        if(args.length>0&&args[0].equals("diagnose")) { require(args,2,"diagnose <archivo-de-informe>"); Installation.writeDiagnostic(Path.of(args[1])); return; }
         Path home=Config.defaultHome(); Files.createDirectories(home);
-        FileChannel lockChannel=FileChannel.open(home.resolve("manager.lock"),StandardOpenOption.CREATE,StandardOpenOption.WRITE);
-        FileLock lock=lockChannel.tryLock();
-        if(lock==null) {
-            lockChannel.close();
-            if(args.length==0||args[0].equals("gui")) { FilesEx.atomicWrite(home.resolve("open.request"),"open"); return; }
+        AppInstance instance=AppInstance.acquire(home,Installation.fingerprint());
+        if(!instance.owned()) {
+            if(args.length==0||args[0].equals("gui")) {
+                if(!instance.matching()) throw new IOException("Ya está abierta otra edición de PZ Cloud. Esta versión nueva todavía no se inició. En el gestor anterior, usá Configuración → Más opciones → Cerrar el gestor por completo y después abrí esta versión.");
+                FilesEx.atomicWrite(home.resolve("open.request"),"open"); return;
+            }
             throw new IOException("El gestor ya está abierto. Usá esa ventana o cerralo antes de ejecutar la CLI.");
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(()-> { try { lock.release(); lockChannel.close(); } catch(IOException ignored) {} }));
+        Runtime.getRuntime().addShutdownHook(new Thread(()-> { try { instance.close(); } catch(IOException ignored) {} }));
         AtomicReference<ManagerWindow> window=new AtomicReference<>();
         Consumer<String> log=message-> {
             System.out.println(message); var ui=window.get(); if(ui!=null) ui.log(message);
@@ -72,7 +73,7 @@ public final class PzCloudApp {
             case "install-mod" -> new GameBridge(manager,()->{},log).installMod();
             default -> throw new IOException("Comandos: gui, list, history, backup, sync, cloud, download, restore, login, check-google, logout, recover, install-mod.");
         }
-        lock.release(); lockChannel.close();
+        instance.close();
     }
     private static void require(String[] args,int length,String usage) throws IOException { if(args.length<length) throw new IOException("Uso: "+usage); }
 }
