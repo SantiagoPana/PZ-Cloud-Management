@@ -1,0 +1,67 @@
+name: Publish Knox Net 2.3.2 release
+
+on:
+  push:
+    branches: [development]
+    paths:
+      - '.github/workflows/publish-knoxnet-2.3.2.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the successful 2.3.2 Windows and Workshop artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 42861874271 --repo "$GITHUB_REPOSITORY" --name KnoxNet-2.3.2-Windows-Google --dir stage/KnoxNet
+          gh run download 42861874271 --repo "$GITHUB_REPOSITORY" --name KnoxNet-Workshop-2.3.2 --dir stage/workshop
+
+      - name: Verify bundled Google and Windows package structure
+        run: |
+          test -f stage/KnoxNet/KnoxNet.exe
+          test -f stage/KnoxNet/app/PZCloudManagement.jar
+          test -d stage/KnoxNet/runtime
+          test -f stage/KnoxNet/GOOGLE_AUTH_STATUS.json
+          test -f stage/workshop/KnoxNet-Workshop-2.3.2.zip
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          status = json.loads(Path('stage/KnoxNet/GOOGLE_AUTH_STATUS.json').read_text(encoding='utf-8-sig'))
+          assert status.get('applicationName') == 'Knox Net', 'Unexpected application name'
+          assert status.get('version') == '2.3.2', 'Unexpected version'
+          assert status.get('googleClientBundled') is True, 'Google client was not included'
+          assert status.get('nativeWindowsRuntimeTested') is True, 'Windows runtime validation missing'
+          print('Validated Knox Net 2.3.2: bundled Google, native Windows runtime and Workshop ZIP.')
+          PY
+
+      - name: Prepare portable ZIP and SHA-256 checksums
+        run: |
+          mkdir -p dist
+          (cd stage && zip -qr ../dist/KnoxNet-2.3.2-Windows-Google.zip KnoxNet)
+          cp stage/workshop/KnoxNet-Workshop-2.3.2.zip dist/
+          (cd dist && sha256sum *.zip > SHA256SUMS.txt)
+          cat > dist/RELEASE_NOTES.md <<'NOTES'
+          # Knox Net 2.3.2
+
+          **PZ Cloud Management** ahora se llama **Knox Net**, tanto en el programa como en la integración para Project Zomboid Build 42.
+
+          - Nuevo programa portable de Windows: `KnoxNet.exe`, con Java y el cliente de Google incluidos.
+          - Mantiene rutas, preferencias, partidas, respaldos y sesiones compatibles de las versiones anteriores.
+          - Mod para Workshop actualizado: **Knox Net**, ID `KNManagement`, autor `47`.
+          - Traducciones EN/ES/AR y mejoras de la ventana del mod.
+
+          **Instalación:** descargá `KnoxNet-2.3.2-Windows-Google.zip`, extraé toda la carpeta y ejecutá `KnoxNet.exe`. Cerrá desde la bandeja cualquier instancia anterior antes de abrir esta versión.
+
+          **Importante:** el inicio de sesión con una cuenta real de Google y la carga de partidas restauradas en B42.22.1 todavía requieren verificación manual. La compilación automatizada y el ejecutable nativo de Windows superaron las pruebas. Versión preliminar.
+          NOTES
+
+      - name: Publish GitHub prerelease with downloadable ZIPs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v2.3.2             dist/KnoxNet-2.3.2-Windows-Google.zip             dist/KnoxNet-Workshop-2.3.2.zip             dist/SHA256SUMS.txt             --repo "$GITHUB_REPOSITORY"             --target "$GITHUB_SHA"             --title "Knox Net 2.3.2 — PZ Cloud Management"             --notes-file dist/RELEASE_NOTES.md             --prerelease
