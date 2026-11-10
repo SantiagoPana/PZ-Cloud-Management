@@ -1,6 +1,6 @@
 # Knox Net: integración para Workshop 2.3.5
 
-**PZ Cloud Management**. Nombre del mod: `Knox Net`; ID elegido por el autor: `KNManagement`; autor: `47`.
+**PZ Cloud Management**. Nombre visible del mod en la rama `workshop`: `Knox Net [PZ Cloud management]`; ID elegido por el autor: `KNManagement`; autor: `47`.
 
 La app de escritorio realiza los respaldos, inicia sesión con Google y mueve las copias a la nube. Puede usarse sin el mod. El mod añade una ventana de consulta/descarga al menú principal del juego; necesita que Knox Net 2.3.5 (o la app anterior PZ Cloud 2.3.1) siga abierta en la misma PC y conectada. El botón **Mostrar aplicación** pide mostrar una instancia que ya está ejecutándose; no puede iniciar un programa cerrado. **Descargar aplicación** abre la release pública en el navegador.
 
@@ -21,9 +21,13 @@ La aplicación de escritorio **2.3.5** ofrece idioma automático según Windows 
 
 La recuperación se hace en la app con Zomboid totalmente cerrado. La copia descargada no aparece automáticamente como mundo jugable. Solo partidas de un jugador; las builds y mods del mundo deben coincidir entre PC.
 
+La rama [`workshop`](https://github.com/SantiagoPana/PZ-Cloud-Management/tree/workshop) es la fuente del mod: `Knox Net/Contents/mods/PZCloudManagement/`. Cada build de `development` trae ese contenido por separado, incluyendo `cloud.png`, `mod.info`, Lua, traducciones y preview, sin modificar la rama. El ZIP conserva la carpeta `Knox Net` y el ejecutable incorpora esa misma versión del mod.
+
 ## Paquete de publicación
 
 ```sh
+git clone -b workshop --single-branch https://github.com/SantiagoPana/PZ-Cloud-Management.git workshop-source
+python3 scripts/prepare-workshop-source.py workshop-source
 python3 scripts/test-mod.py
 python3 scripts/package-workshop.py
 ```
@@ -32,7 +36,7 @@ Las pruebas requieren Lua 5.1. El segundo comando genera `build/workshop/KnoxNet
 
 1. Cerrá el juego. Para probar localmente, colocá la carpeta `Contents/mods/PZCloudManagement` en tu carpeta real `Zomboid/mods/`. Reemplazá por completo la versión local anterior.
 2. Activá el mod y reiniciá Zomboid B42.22.1 para cargar las traducciones. No mantengas simultáneamente una copia local y otra de Workshop con el mismo ID.
-3. Para publicarlo, copiá la carpeta `KnoxNet-Workshop` completa dentro de `Zomboid/Workshop/` y seleccionála en **Workshop → Crear y actualizar artículos**.
+3. Para publicarlo, copiá la carpeta `Knox Net` completa dentro de `Zomboid/Workshop/` y seleccionála en **Workshop → Crear y actualizar artículos**.
 4. Revisá imagen, título, descripción y visibilidad. Conservá el aviso de que necesita la app externa. Steam asignará el ID del artículo: conservá ese ID para futuras actualizaciones.
 
 La app anterior PZ Cloud 2.3.1 incluye la integración anterior; Knox Net 2.3.5 incluye este mod actualizado. **No uses Instalar botón en el juego desde esa app después de instalar el mod 2.3.5**, porque sobreescribiría los archivos nuevos. El instalador del código actualizado sí instala JSON y elimina únicamente los dos archivos de traducción obsoletos del mod.
