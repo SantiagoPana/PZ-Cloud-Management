@@ -153,6 +153,7 @@ final class I18n {
         translation.put("Abrí esta dirección en tu navegador:", "Open this address in your browser:");
         translation.put("Sigue abierto en la bandeja. Hacé clic en el icono para volver, o elegí Salir para cerrarlo.", "Knox Net is running in the tray. Click its icon to return, or choose Exit to quit.");
         translation.put("Esperá a que termine la operación antes de cerrar.", "Wait for the operation to finish before closing.");
+        translation.put("Se cerrará al terminar la operación actual.", "Knox Net will exit when the current operation finishes.");
         translation.put("Esperá a que termine la operación antes de salir.", "Wait for the operation to finish before exiting.");
         translation.put("Abrir Knox Net", "Open Knox Net");
         translation.put("Salir", "Exit");
