@@ -33,6 +33,7 @@ public final class SignInUiSmoke {
     }
     public static void main(String[] args) throws Exception {
         Path root=Files.createTempDirectory("pzcloud-signin-ui-").toRealPath(); ExecutorService worker=Executors.newSingleThreadExecutor(); java.util.List<Window> dialogs=new ArrayList<>();
+        Config langConfig=new Config(Files.createDirectories(root.resolve("ui-language"))); langConfig.set("language","es"); I18n.configure(langConfig);
         try(SelfTest.MockDrive mock=new SelfTest.MockDrive()) {
             Path home=Files.createDirectories(root.resolve("configured")); GoogleAuth auth=new GoogleAuth(home,mock.base.resolve("token"),Duration.ofSeconds(20),()->SelfTest.desktopClient("publisher"));
             CountDownLatch browser=new CountDownLatch(1),connected=new CountDownLatch(1); AtomicReference<URI> url=new AtomicReference<>(); AtomicReference<SignInDialog> popup=new AtomicReference<>(); AtomicInteger openings=new AtomicInteger();
