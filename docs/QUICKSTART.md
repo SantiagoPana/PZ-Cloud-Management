@@ -46,7 +46,7 @@ Las fechas se muestran en la hora local de tu PC. Las versiones divergentes no s
 
 ## Cerrar y consumo
 
-El botón **Minimizar a la bandeja** siempre mantiene Knox Net activo, aunque no haya tareas pendientes. Podés reabrirlo con el icono junto al reloj. Si cerrás con la **X**, se queda en bandeja solo cuando hay protección o envíos activos; en modo manual sin pendientes, cierra la aplicación. **Salir** desde la bandeja detiene todo. Si no hay bandeja disponible, el botón minimiza normalmente.
+El botón **Minimizar a la bandeja** mantiene Knox Net activo, aunque no haya tareas pendientes. Podés reabrirlo con el icono junto al reloj. La **X** cierra completamente el gestor, incluso con protección o envíos pendientes; si una operación ya comenzó, Knox Net la termina antes de salir. **Salir** desde la bandeja también lo cierra. Si no hay bandeja, el botón minimiza normalmente.
 
 No consulta el catálogo remoto a intervalos: lo hace al entrar a Recuperar o al pulsar Actualizar. Los envíos fallidos se reintentan cada vez menos seguido. El modo carpeta depende de otra aplicación de nube y de su consumo; usalo si ya la utilizás.
 
