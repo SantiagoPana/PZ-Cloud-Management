@@ -5,19 +5,19 @@ require "ISUI/ISScrollingListBox"
 -- The Workshop mod is a menu for the desktop app, not an OAuth client.
 -- Protocol v1 stays compatible with the published desktop app 2.3.1.
 PZCloud = PZCloud or { counter = 0 }
-local RELEASE_URL = "https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1"
+local RELEASE_URL = "https://github.com/SantiagoPana/PZ-Cloud-Management/releases/"
 local MAX_COPIES = 500
 local fallback = {
-    Title = "Your cloud saves", Menu = "PZ Cloud saves",
-    Subtitle = "Requires the free PZ Cloud desktop app, running on this PC and connected to Google Drive.",
+    Title = "Knox Net", Menu = "Knox Net",
+    Subtitle = "PZ Cloud Management. Requires the free Knox Net desktop app, running on this PC and connected to Google Drive.",
     RestoreHint = "Downloading keeps a copy on this PC. To restore it, close Zomboid completely and use the desktop app.",
     Waiting = "Contacting the desktop app...", Downloading = "Downloading the selected copy. Large worlds can take several minutes...",
     WriteError = "Could not send the request. Check the permissions of your Zomboid folder.",
     Select = "Select a copy first.", Refreshed = "Cloud list updated. Select a copy to download it.",
     Downloaded = "Copy downloaded. Close Zomboid and restore it in the desktop app.",
-    Opened = "Desktop window requested. Switch to the PZ Cloud application.",
+    Opened = "Desktop window requested. Switch to the Knox Net application.",
     CompanionError = "Could not complete the request. Open the desktop app to check your Google connection.",
-    Offline = "No response yet. Check that PZ Cloud is running and connected, then refresh. A large download may still be running.",
+    Offline = "No response yet. Check that Knox Net is running and connected, then refresh. A large download may still be running.",
     Ready = "Open the desktop app and sign in with Google, then refresh this list.",
     Refresh = "Refresh", Download = "Download copy", Open = "Show desktop app", GetApp = "Get desktop app", Close = "Close",
     Empty = "No copies to show", EmptyHint = "Open the desktop app, connect Google and save a world to the cloud.",

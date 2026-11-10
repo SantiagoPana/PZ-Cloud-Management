@@ -41,14 +41,14 @@ public final class SignInDialog extends JDialog {
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); setResizable(false);
         JPanel root=new JPanel(); root.setLayout(new BoxLayout(root,BoxLayout.Y_AXIS)); root.setBorder(new EmptyBorder(24,26,18,26)); setContentPane(root);
         JLabel title=new JLabel("Conectá tu cuenta de Google"); title.setFont(new Font("Segoe UI",Font.BOLD,22)); title.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(title); root.add(Box.createVerticalStrut(14));
-        description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a PZ Cloud."); root.add(description); root.add(Box.createVerticalStrut(14));
+        description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a Knox Net."); root.add(description); root.add(Box.createVerticalStrut(14));
         login.setFont(new Font("Segoe UI",Font.BOLD,15)); login.setBackground(Color.WHITE); login.setForeground(new Color(38,46,48)); login.setMargin(new Insets(12,18,12,18)); login.setFocusPainted(false); login.setAlignmentX(Component.CENTER_ALIGNMENT); root.add(login); root.add(Box.createVerticalStrut(14));
         root.add(status); links.add(copy); links.add(details); links.setVisible(false); root.add(links);
         JPanel bottom=new JPanel(new FlowLayout(FlowLayout.CENTER,10,0)); bottom.add(change); bottom.add(cancel); root.add(Box.createVerticalStrut(8)); root.add(bottom);
         for(JButton button:new JButton[]{cancel,copy,change}) button.setFocusPainted(false);
         login.addActionListener(e->{ if(running) openBrowser(); else if(auth.connected()) start(false); else begin(); });
         change.addActionListener(e->begin()); cancel.addActionListener(e->cancel());
-        details.addActionListener(e->{ JTextArea info=new JTextArea(Installation.describe(auth),6,55); info.setEditable(false); info.setLineWrap(true); info.setWrapStyleWord(true); JOptionPane.showMessageDialog(this,new JScrollPane(info),"Información de PZ Cloud",JOptionPane.INFORMATION_MESSAGE); });
+        details.addActionListener(e->{ JTextArea info=new JTextArea(Installation.describe(auth),6,55); info.setEditable(false); info.setLineWrap(true); info.setWrapStyleWord(true); JOptionPane.showMessageDialog(this,new JScrollPane(info),"Información de Knox Net",JOptionPane.INFORMATION_MESSAGE); });
         copy.addActionListener(e->{ if(address!=null) { Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(address.toString()),null); status.setText("Enlace copiado. Abrilo en tu navegador y elegí tu cuenta."); } });
         addWindowListener(new WindowAdapter() { public void windowClosing(WindowEvent e) { cancel(); } });
         ready(); pack(); setLocationRelativeTo(owner);
@@ -60,9 +60,9 @@ public final class SignInDialog extends JDialog {
         boolean configured=auth.configured(),existing=auth.connected(); login.setEnabled(true); change.setVisible(existing&&configured); change.setEnabled(true); cancel.setEnabled(true); cancel.setText(existing?"Cerrar":"Cancelar");
         copy.setEnabled(true); copy.setVisible(false); details.setVisible(!configured); links.setVisible(!configured);
         login.setText(existing?"Usar esta conexión":"Iniciar sesión con Google");
-        description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a PZ Cloud.");
+        description.setText("Elegí tu cuenta en Google y autorizá el acceso a tus copias. Al terminar, volvés automáticamente a Knox Net.");
         if(existing) status.setText("Tu sesión está guardada. Al usarla, comprobamos que Google Drive responda.");
-        else if(!configured) { description.setText(auth.configurationProblem()); status.setText("Descargá la versión actualizada de PZ Cloud y volvé a intentar. Tus partidas y copias locales se conservan."); cancel.setText("Cerrar"); }
+        else if(!configured) { description.setText(auth.configurationProblem()); status.setText("Descargá la versión actualizada de Knox Net y volvé a intentar. Tus partidas y copias locales se conservan."); cancel.setText("Cerrar"); }
         else status.setText(auth.sessionProblem().isBlank()?"La sesión se guarda para que no tengas que repetir este paso.":auth.sessionProblem());
     }
     /** One click from the main app opens this window and launches the official account chooser. */
@@ -91,7 +91,7 @@ public final class SignInDialog extends JDialog {
                         if(phase.equals("committing")) { status.setText("Guardando tu conexión en esta PC…"); cancel.setEnabled(false); }
                     });
                 });
-                finishing.set(true); SwingUtilities.invokeLater(()-> { if(!dismissed) { login.setText("Comprobando Drive…"); login.setEnabled(false); copy.setEnabled(false); cancel.setEnabled(false); status.setText("Comprobando que tu cuenta permita acceder a los respaldos de PZ Cloud…"); } });
+                finishing.set(true); SwingUtilities.invokeLater(()-> { if(!dismissed) { login.setText("Comprobando Drive…"); login.setEnabled(false); copy.setEnabled(false); cancel.setEnabled(false); status.setText("Comprobando que tu cuenta permita acceder a los respaldos de Knox Net…"); } });
                 check.verify();
                 SwingUtilities.invokeLater(()-> { if(!dismissed) { running=false; finish(); } });
             } catch(Exception ex) {

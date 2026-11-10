@@ -1,10 +1,10 @@
 # Habilitar Google una sola vez para el programa
 
-Esta configuración la hace el autor de PZ Cloud. Los usuarios finales solo deben pulsar **Iniciar sesión con Google** y autorizar su cuenta.
+Esta configuración la hace el autor de Knox Net. Los usuarios finales solo deben pulsar **Iniciar sesión con Google** y autorizar su cuenta.
 
 ## Registrar la aplicación
 
-1. En [Google Cloud Console](https://console.cloud.google.com/), creá o elegí el proyecto de PZ Cloud y habilitá Google Drive API.
+1. En [Google Cloud Console](https://console.cloud.google.com/), creá o elegí el proyecto de Knox Net y habilitá Google Drive API.
 2. Configurá el consentimiento con el nombre real de la aplicación y el permiso `https://www.googleapis.com/auth/drive.appdata`.
 3. Creá un cliente OAuth de tipo **Aplicación de escritorio** y descargá su JSON.
 4. Mientras el proyecto esté en modo de prueba, agregá las cuentas autorizadas a sus usuarios de prueba. Para distribución pública, completá los requisitos de publicación/verificación que Google indique.

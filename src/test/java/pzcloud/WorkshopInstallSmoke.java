@@ -23,7 +23,7 @@ public final class WorkshopInstallSmoke {
             }
             if(Files.exists(translations.resolve("EN/UI_EN.txt"))||Files.exists(translations.resolve("ES/UI_ES.txt"))) throw new AssertionError("Obsolete translations survived upgrade");
             if(!Files.readString(translations.resolve("ES/custom.txt")).equals("keep custom file")) throw new AssertionError("Unrelated file changed");
-            if(!FilesEx.readJson(translations.resolve("ES/UI.json")).get("UI_PZCloud_Title").equals("Tus partidas en la nube")) throw new AssertionError("Spanish JSON did not install correctly");
+            if(!FilesEx.readJson(translations.resolve("ES/UI.json")).get("UI_PZCloud_Title").equals("Knox Net")) throw new AssertionError("Spanish JSON did not install correctly");
             System.out.println("Workshop mod installation passed: consumer JAR, EN/ES/AR JSON, image and selective upgrade; no personal files or Google account accessed.");
         } finally { FilesEx.deleteTree(temp); }
     }

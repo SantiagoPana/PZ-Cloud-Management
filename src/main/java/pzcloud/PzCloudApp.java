@@ -13,8 +13,8 @@ public final class PzCloudApp {
     public static void main(String[] args) {
         try { launch(args); }
         catch(Exception ex) {
-            System.err.println("PZ Cloud Management: "+ex.getMessage());
-            if(args.length==0&&!java.awt.GraphicsEnvironment.isHeadless()) JOptionPane.showMessageDialog(null,ex.getMessage(),"PZ Cloud Management",JOptionPane.ERROR_MESSAGE);
+            System.err.println("Knox Net: "+ex.getMessage());
+            if(args.length==0&&!java.awt.GraphicsEnvironment.isHeadless()) JOptionPane.showMessageDialog(null,ex.getMessage(),"Knox Net",JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
     }
@@ -24,7 +24,7 @@ public final class PzCloudApp {
         AppInstance instance=AppInstance.acquire(home,Installation.fingerprint());
         if(!instance.owned()) {
             if(args.length==0||args[0].equals("gui")) {
-                if(!instance.matching()) throw new IOException("Ya está abierta otra edición de PZ Cloud. Esta versión nueva todavía no se inició. En el gestor anterior, usá Configuración → Más opciones → Cerrar el gestor por completo y después abrí esta versión.");
+                if(!instance.matching()) throw new IOException("Ya está abierta otra edición de Knox Net. Esta versión nueva todavía no se inició. En el gestor anterior, usá Configuración → Más opciones → Cerrar el gestor por completo y después abrí esta versión.");
                 FilesEx.atomicWrite(home.resolve("open.request"),"open"); return;
             }
             throw new IOException("El gestor ya está abierto. Usá esa ventana o cerralo antes de ejecutar la CLI.");

@@ -1,8 +1,10 @@
-# Usar PZ Cloud 2.3.1
+# Usar Knox Net 2.3.2
+
+**PZ Cloud Management**
 
 ## Primera vez
 
-Extraé la aplicación portable completa y abrí **PZCloudManagement.exe**. En Configuración elegí una de estas opciones:
+Extraé la aplicación portable completa y abrí **KnoxNet.exe**. En Configuración elegí una de estas opciones:
 
 | Opción | Qué necesitás |
 | --- | --- |
@@ -14,7 +16,7 @@ Para el modo carpeta, el gestor prepara una subcarpeta `PZCloudManagement` en el
 
 ## Conectar con la ventanita
 
-**Iniciar sesión con Google** abre el selector oficial de cuenta en el navegador y recibe la respuesta automáticamente. La sesión se recuerda y la ventana se cierra al terminar. La conexión de PZ Cloud viene incluida. Si la edición instalada no tiene Google disponible, actualizá el programa o contactá al soporte.
+**Iniciar sesión con Google** abre el selector oficial de cuenta en el navegador y recibe la respuesta automáticamente. La sesión se recuerda y la ventana se cierra al terminar. La conexión de Knox Net viene incluida. Si la edición instalada no tiene Google disponible, actualizá el programa o contactá al soporte.
 
 ## Guardar
 

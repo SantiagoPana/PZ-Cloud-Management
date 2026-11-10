@@ -1,4 +1,6 @@
-# PZ Cloud 2.3.1
+# Knox Net 2.3.2
+
+**PZ Cloud Management** — nombre anterior del gestor y descripción de Knox Net.
 
 **Guardá tu partida. Recuperala en otra PC.** Aplicación de escritorio en español para partidas de un jugador de Project Zomboid B42. Autor: Santiago Martin.
 
@@ -12,7 +14,9 @@ Las herramientas de compilación y su configuración son para el desarrollador y
 
 ## Empezar
 
-**[Descargar PZ Cloud 2.3.1 para Windows — Google incluido](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/download/v2.3.1/PZCloudManagement-2.3.1-Windows-Google.zip)**. Extraé toda la carpeta y abrí **PZCloudManagement.exe**. Java viene incluido. [Notas de la versión](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1).
+La compilación en preparación es **Knox Net 2.3.2**. Descargá el artefacto **KnoxNet-2.3.2-Windows-Google** del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraé toda la carpeta y abrí **KnoxNet.exe**. Java y la conexión de Google vienen incluidos.
+
+La [release publicada anterior, PZ Cloud 2.3.1](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1), conserva su nombre y ejecutable originales.
 
 1. En **Configuración**, elegí **Solo en esta PC**, una **carpeta de Drive/OneDrive que ya uses**, o **Google Drive directo** si tu edición ya lo trae habilitado.
 2. Elegí la partida y pulsá **Guardar partida**. Activá **Guardar automáticamente al cerrar Zomboid** si querés protección automática.
@@ -51,7 +55,7 @@ Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC
 
 ## Compatibilidad y estado
 
-**2.3.1-alpha.1**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
+**2.3.2 preliminar**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
 
 88 pruebas automáticas con mundos ficticios y simulador HTTP local, más pruebas gráficas de configurar/guardar/recuperar y de la ventana de inicio de sesión con un simulador local. Ninguna prueba automatizada conecta una cuenta real. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
 
@@ -68,7 +72,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 ```
 
-`Start-PZCloud.cmd` compila y abre. Linux: `bash scripts/test.sh`; abrir con `java -Xms8m -XX:+UseSerialGC -jar build/PZCloudManagement.jar`.
+`Start-KnoxNet.cmd` compila y abre. Linux: `bash scripts/test.sh`; abrir con `java -Xms8m -XX:+UseSerialGC -jar build/PZCloudManagement.jar`.
 
 [Arquitectura](docs/ARCHITECTURE.md) · [Formato](docs/FORMAT.md) · [Google directo](docs/GOOGLE_DRIVE.md) · [Pruebas](docs/TEST_PLAN.md) · [Privacidad](docs/PRIVACY.md).
 
@@ -76,12 +80,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Package
 
 ## Mod opcional para Workshop
 
-El mod **2.3.2** agrega una ventana al menú principal y el acceso **F8**. Requiere la **aplicación de escritorio 2.3.1**, abierta en la misma PC y conectada a Google. La app funciona sin el mod; el mod necesita la app para listar y descargar copias. La suscripción de Workshop instala la integración Lua; el programa de Windows se descarga una vez desde la release.
+El mod **2.3.2** agrega una ventana al menú principal y el acceso **F8**. Requiere **Knox Net 2.3.2 o la aplicación anterior PZ Cloud 2.3.1**, abierta en la misma PC y conectada a Google. La app funciona sin el mod; el mod necesita la app para listar y descargar copias. La suscripción de Workshop instala la integración Lua; el programa de Windows se descarga una vez desde la release.
 
 Las traducciones de B42.15+ usan JSON en inglés, español y español de Argentina. La ventana muestra fechas legibles, diferencia el catálogo guardado de uno actualizado, evita solicitudes simultáneas y deja de consultar archivos después de responder o agotar el tiempo de espera. Para recuperar una partida, cerrá Zomboid completamente y usá la aplicación.
 
-El mod 2.3.2 se está preparando para Workshop; la release de escritorio 2.3.1 conserva su integración anterior. [Preparar, probar y publicar el mod](docs/WORKSHOP.md).
+El mod aparece como **Knox Net**, con ID `KNManagement` y autor `47`. Knox Net 2.3.2 lo incluye actualizado; la release anterior PZ Cloud 2.3.1 conserva su integración anterior. [Preparar, probar y publicar el mod](docs/WORKSHOP.md).
 
 ## Identificación de instalaciones en la 2.3.1
 
 La ventana diferencia Google incluido de Solo copias locales. Una edición nueva no reutiliza silenciosamente otra compilación que ya estaba abierta. El comando `diagnose <archivo>` comprueba el ejecutable/JAR actual sin abrir una cuenta ni tocar la configuración personal. Los artefactos de CI sin cliente se identifican como `Preview-local-only`. La prueba de Windows arranca una copia aislada del ejecutable con su runtime privado y una identidad de prueba incluida, sin contactar a Google ni modificar el portable distribuido.
+
+## Cambio de nombre
+
+Knox Net conserva las carpetas de datos, formato de copias, conexión de Google y protocolo local del gestor anterior. Los nombres técnicos `PZCloudManagement`, `.pzcloud`, el paquete Java `pzcloud` y las claves `UI_PZCloud_*` se conservan para que las instalaciones existentes encuentren sus datos. El nombre elegido para el mod, `KNManagement`, se conserva según la configuración del autor. [Detalles del cambio de marca](docs/BRANDING.md).

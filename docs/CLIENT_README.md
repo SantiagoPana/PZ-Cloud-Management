@@ -1,6 +1,8 @@
-# PZ Cloud 2.3.1
+# Knox Net 2.3.2
 
-Tus partidas, a salvo. Abrí **PZCloudManagement.exe**, iniciá sesión con Google y autorizá el acceso a tus respaldos. Java viene incluido.
+**PZ Cloud Management**
+
+Tus partidas, a salvo. Abrí **KnoxNet.exe**, iniciá sesión con Google y autorizá el acceso a tus respaldos. Java viene incluido.
 
 1. Cerrá Zomboid y elegí una partida en **Mis partidas**.
 2. Pulsá **Guardar partida**. La copia local se verifica y se envía al destino elegido.
@@ -17,4 +19,4 @@ Para recuperar un mundo usá una versión de Zomboid y mods compatibles. La app 
 
 Soporte: https://github.com/SantiagoPana/PZ-Cloud-Management/issues
 
-El título de la ventana identifica la edición: **2.3.1 · Google incluido**. Si ya estaba abierta otra edición, usá en ella Configuración → Más opciones → Cerrar el gestor por completo, y después abrí esta versión.
+El título de la ventana identifica la edición: **2.3.2 · Google incluido**. Si ya estaba abierta otra edición, usá en ella Configuración → Más opciones → Cerrar el gestor por completo, y después abrí esta versión.

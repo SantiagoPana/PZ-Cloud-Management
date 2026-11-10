@@ -55,6 +55,6 @@ public final class GameBridge {
         }
         // Remove only our superseded translations when upgrading a local installation.
         for(String old:List.of("EN/UI_EN.txt","ES/UI_ES.txt")) Files.deleteIfExists(modRoot.resolve("42/media/lua/shared/Translate/"+old));
-        log.accept("Mod instalado. Activá PZ Cloud Management en el menú Mods de Build 42.");
+        log.accept("Mod instalado. Activá Knox Net en el menú Mods de Build 42.");
     }
 }

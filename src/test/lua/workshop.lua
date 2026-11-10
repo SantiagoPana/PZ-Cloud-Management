@@ -142,7 +142,7 @@ end)
 test('Download button opens only the fixed public release page', function()
     local e=setup('ES'); local panel=e:open(); local writes=e.writes
     panel:onClick(panel.buttons.GET_APP)
-    eq(e.url,'https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1'); eq(e.writes,writes)
+    eq(e.url,'https://github.com/SantiagoPana/PZ-Cloud-Management/releases/'); eq(e.writes,writes)
 end)
 test('Permission and writer-close failures do not leave a pending operation', function()
     for _, failure in ipairs({'writeError','closeError'}) do

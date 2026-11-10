@@ -43,7 +43,7 @@ public final class GoogleAuth {
         applicationClient=bundled;
         configurationDiagnostic=diagnostic;
         try { token=vault.read(); } catch(IOException ex) { token=new LinkedHashMap<>(); sessionProblem="La sesión anterior necesita volver a conectarse."; }
-        if(!Json.str(token,"refresh_token").isBlank()&&!Json.str(token,"client_id").equals(Json.str(applicationClient,"client_id"))) sessionProblem="Volvé a iniciar sesión para usar la conexión de esta versión de PZ Cloud.";
+        if(!Json.str(token,"refresh_token").isBlank()&&!Json.str(token,"client_id").equals(Json.str(applicationClient,"client_id"))) sessionProblem="Volvé a iniciar sesión para usar la conexión de esta versión de Knox Net.";
     }
     synchronized HttpClient http() { if(http==null) http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).followRedirects(HttpClient.Redirect.NEVER).build(); return http; }
     public synchronized String connectionId() { return HexFormat.of().formatHex(FilesEx.digest("SHA-256").digest((Json.str(token,"client_id")+"|"+Json.str(token,"refresh_token")).getBytes(StandardCharsets.UTF_8))); }
@@ -54,10 +54,10 @@ public final class GoogleAuth {
     public String configurationDiagnostic() { return configurationDiagnostic; }
     public String configurationProblem() {
         try { client(); return ""; }
-        catch(IOException ex) { return "Google no está disponible en esta edición. Actualizá PZ Cloud para conectar tu cuenta. Tus copias locales siguen disponibles."; }
+        catch(IOException ex) { return "Google no está disponible en esta edición. Actualizá Knox Net para conectar tu cuenta. Tus copias locales siguen disponibles."; }
     }
     private Map<String,Object> client() throws IOException {
-        if(applicationClient.isEmpty()) throw new IOException("La conexión de Google de esta edición no está disponible. Actualizá PZ Cloud.");
+        if(applicationClient.isEmpty()) throw new IOException("La conexión de Google de esta edición no está disponible. Actualizá Knox Net.");
         return applicationClient;
     }
     private Map<String,Object> validateClient(Map<String,Object> document) throws IOException {
@@ -87,14 +87,14 @@ public final class GoogleAuth {
             callback=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
             String redirect="http://127.0.0.1:"+callback.getAddress().getPort()+"/callback";
             callback.createContext("/callback",exchange->{
-                int code=400; String message="Solicitud inválida. Volvé a PZ Cloud.",acceptedCode=null; IOException denial=null;
+                int code=400; String message="Solicitud inválida. Volvé a Knox Net.",acceptedCode=null; IOException denial=null;
                 try {
                     Map<String,String> params;
                     try { params=query(exchange.getRequestURI().getRawQuery()); } catch(IllegalArgumentException ex) { params=Map.of(); }
                     if(exchange.getRequestMethod().equals("GET")&&exchange.getRequestURI().getPath().equals("/callback")&&MessageDigest.isEqual(state.getBytes(StandardCharsets.UTF_8),params.getOrDefault("state","").getBytes(StandardCharsets.UTF_8))) {
-                        if(attempt.phase.get()!=0) message="Esta conexión se canceló. Volvé a iniciar sesión desde PZ Cloud.";
-                        else if(params.containsKey("error")) { denial=new IOException("Google canceló o denegó la autorización."); message="Autorización cancelada. Podés volver a PZ Cloud."; }
-                        else if(!params.getOrDefault("code","").isBlank()) { acceptedCode=params.get("code"); code=200; message="La respuesta de Google llegó. Volvé a PZ Cloud para terminar; podés cerrar esta pestaña."; }
+                        if(attempt.phase.get()!=0) message="Esta conexión se canceló. Volvé a iniciar sesión desde Knox Net.";
+                        else if(params.containsKey("error")) { denial=new IOException("Google canceló o denegó la autorización."); message="Autorización cancelada. Podés volver a Knox Net."; }
+                        else if(!params.getOrDefault("code","").isBlank()) { acceptedCode=params.get("code"); code=200; message="La respuesta de Google llegó. Volvé a Knox Net para terminar; podés cerrar esta pestaña."; }
                     }
                     byte[] bytes=message.getBytes(StandardCharsets.UTF_8); exchange.getResponseHeaders().set("Content-Type","text/plain; charset=utf-8"); exchange.getResponseHeaders().set("Cache-Control","no-store"); exchange.sendResponseHeaders(code,bytes.length); exchange.getResponseBody().write(bytes);
                 } finally { exchange.close(); if(denial!=null) attempt.code.completeExceptionally(denial); else if(acceptedCode!=null) attempt.code.complete(acceptedCode); }
@@ -140,8 +140,8 @@ public final class GoogleAuth {
                 if(response.statusCode()==401&&attempt==0) continue;
                 if(response.statusCode()==200) { Json.array(Json.object(Json.parse(new String(bytes,StandardCharsets.UTF_8))).get("files")); return; }
                 String reason=new String(bytes,StandardCharsets.UTF_8);
-                if(response.statusCode()==403&&(reason.contains("accessNotConfigured")||reason.contains("SERVICE_DISABLED"))) throw new IOException("Tu sesión está guardada, pero Google Drive no está disponible para PZ Cloud. Contactá al soporte de la aplicación.");
-                if(response.statusCode()==403) throw new IOException("Google no autorizó el acceso a tus respaldos. Volvé a autorizar Drive con Elegir otra cuenta. Si sigue fallando, contactá al soporte de PZ Cloud.");
+                if(response.statusCode()==403&&(reason.contains("accessNotConfigured")||reason.contains("SERVICE_DISABLED"))) throw new IOException("Tu sesión está guardada, pero Google Drive no está disponible para Knox Net. Contactá al soporte de la aplicación.");
+                if(response.statusCode()==403) throw new IOException("Google no autorizó el acceso a tus respaldos. Volvé a autorizar Drive con Elegir otra cuenta. Si sigue fallando, contactá al soporte de Knox Net.");
                 if(response.statusCode()==401) throw new IOException("Google necesita que vuelvas a iniciar sesión. Elegí otra cuenta para autorizar de nuevo.");
                 throw new IOException("No se pudo comprobar Google Drive (HTTP "+response.statusCode()+"). La sesión está guardada; podés reintentar.");
             } catch(TimeoutException ex) { throw new IOException("Google Drive tardó demasiado. La sesión está guardada; podés reintentar.",ex); }
