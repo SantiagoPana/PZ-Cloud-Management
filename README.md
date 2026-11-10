@@ -14,7 +14,7 @@ Las herramientas de compilación y su configuración son para el desarrollador y
 
 ## Empezar
 
-**[Descargar Knox Net 2.3.5 para Windows — Google incluido](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/download/v2.3.5/KnoxNet-2.3.5-Windows-Google.zip)**. Extraé toda la carpeta y abrí **KnoxNet.exe**. Java y la identidad de aplicación de Google vienen incluidos. [Notas de la versión y checksums](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.5).
+**Knox Net 2.3.5 está en pruebas en `development`**. Los ZIP de prueba de Windows y del mod están en [GitHub Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions/workflows/build.yml). La [versión pública anterior 2.3.4](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.4) sigue disponible. Extraé toda la carpeta del portable y abrí **KnoxNet.exe**; Java y la identidad de aplicación de Google vienen incluidos en el artefacto Windows-Google.
 
 La [release publicada anterior, PZ Cloud 2.3.1](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1), conserva su nombre y ejecutable originales.
 
