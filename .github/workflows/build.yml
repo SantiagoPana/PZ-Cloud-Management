@@ -78,6 +78,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: java -Xms8m -Xmx768m -XX:+UseSerialGC -cp "build/classes;build/test-classes" pzcloud.UiSmoke
+      - name: Title-bar X closes the manager instead of hiding in tray
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: java -Xms8m -Xmx768m -XX:+UseSerialGC -cp "build/classes;build/test-classes" pzcloud.CloseWindowSmoke
       - name: Consumer JAR (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
