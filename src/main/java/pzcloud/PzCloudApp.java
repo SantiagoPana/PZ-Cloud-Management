@@ -64,12 +64,13 @@ public final class PzCloudApp {
                 manager.restore(local,local.snapshot().get("mode"),args[2],Arrays.asList(args).contains("--replace"));
             }
             case "login" -> {
-                if(args.length>1) manager.auth.importClient(Path.of(args[1])); manager.auth.connect(ManagerWindow::openBrowser); manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); System.out.println("Google Drive conectado.");
+                if(args.length>1) manager.auth.importClient(Path.of(args[1])); manager.auth.connect(ManagerWindow::openBrowser); manager.auth.verifyDriveAccess(); manager.config.update(Map.of("cloudMode","drive","setupComplete",true)); System.out.println("Google Drive comprobado.");
             }
+            case "check-google" -> { manager.auth.verifyDriveAccess(); System.out.println("Acceso al espacio de respaldos de Google Drive comprobado."); }
             case "logout" -> manager.auth.disconnect();
             case "recover" -> manager.engine.recover(manager.config.saves());
             case "install-mod" -> new GameBridge(manager,()->{},log).installMod();
-            default -> throw new IOException("Comandos: gui, list, history, backup, sync, cloud, download, restore, login, logout, recover, install-mod.");
+            default -> throw new IOException("Comandos: gui, list, history, backup, sync, cloud, download, restore, login, check-google, logout, recover, install-mod.");
         }
         lock.release(); lockChannel.close();
     }

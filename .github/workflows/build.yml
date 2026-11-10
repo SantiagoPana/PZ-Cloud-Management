@@ -38,12 +38,13 @@ jobs:
         if: runner.os == 'Windows' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: PZCloud-2.1-UI
+          name: PZCloud-2.2-UI
           path: |
             build/ui-smoke.png
             build/ui-v2-recover.png
             build/ui-google-sign-in.png
             build/ui-google-not-configured.png
+            build/ui-google-setup.png
           if-no-files-found: ignore
       - name: Integration tests (Linux)
         if: runner.os == 'Linux'
@@ -66,7 +67,7 @@ jobs:
         run: ./scripts/build.ps1 -Package
       - uses: actions/upload-artifact@v4
         with:
-          name: PZCloudManagement-2.1-Windows-x64
+          name: PZCloudManagement-2.2-Windows-x64
           path: build/portable/PZCloudManagement/
           if-no-files-found: error
           retention-days: 30

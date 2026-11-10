@@ -1,4 +1,4 @@
-# Usar PZ Cloud 2.1
+# Usar PZ Cloud 2.2
 
 ## Primera vez
 

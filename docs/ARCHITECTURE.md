@@ -1,4 +1,4 @@
-# Arquitectura 2.1
+# Arquitectura 2.2
 
 Se conserva el motor de archivos de la 1.0 y se reemplazan la interfaz y la ejecución periódica.
 
@@ -6,6 +6,7 @@ Se conserva el motor de archivos de la 1.0 y se reemplazan la interfaz y la ejec
 | --- | --- |
 | ManagerWindow | Dos vistas principales, configuración guiada, modelos pequeños, tareas fuera del hilo de interfaz |
 | SignInDialog | Ventana nativa de ingreso, navegador del sistema, retorno automático y cancelación sin sondeo |
+| GoogleSetupDialog | Importación guiada del cliente de escritorio para el autor; no aparece en ediciones configuradas |
 | GoogleClientDefaults / PublisherConfig | Identidad de escritorio incluida por el autor al compilar, separada de las sesiones de usuarios |
 | BackgroundService | WatchService para solicitudes; sondeo de proceso solo con protección; reintentos solo con pendientes |
 | SaveManager | Catálogo lateral compacto, migración, cola, retención y operaciones verificadas |
@@ -19,6 +20,8 @@ Se conserva el motor de archivos de la 1.0 y se reemplazan la interfaz y la ejec
 ## Reposo
 
 El ingreso utiliza el mismo trabajador de la aplicación y un callback loopback temporal. Al terminar, cancelar o vencer la espera se cierra el listener. No se incorpora un motor de navegador ni un servicio de autenticación residente. La sesión conserva el cliente con el que se creó para mantener compatibilidad entre actualizaciones.
+
+Antes de anunciar una conexión lista, se consulta un único elemento de `appDataFolder` para comprobar el permiso de Drive. Solo se hace al conectar o reutilizar la sesión desde la ventana; no se convierte en un sondeo de red periódico. La búsqueda de partidas filtra el catálogo ya cargado en el hilo de interfaz sin leer los archivos de los mundos.
 
 Sin protección ni pendientes, no se programan tareas temporizadas. Un hilo daemon duerme esperando eventos del sistema para abrir la ventana o atender al mod; no lee las partidas. La ventana manual se cierra terminando el proceso.
 

@@ -305,6 +305,15 @@ public final class SelfTest {
             test("Disconnect removes local credential; cancelled login stores no session",()-> {
                 auth.disconnect(); ok(!Files.exists(home.resolve("google-session.token"))); fails(()->auth.connect(uri->{ try { var q=GoogleAuth.query(uri.getRawQuery()); HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(q.get("redirect_uri")+"?state="+q.get("state")+"&error=access_denied")).GET().build(),HttpResponse.BodyHandlers.ofString()); } catch(Exception ex) { throw new RuntimeException(ex); } })); ok(!auth.connected());
             });
+            test("Drive readiness checks actual appData permission without uploading a test file",()-> {
+                auth.connect(uri->approveLogin(uri,mock)); int before=mock.files.size(); auth.verifyDriveAccess(mock.base.resolve("drive-check?spaces=appDataFolder&pageSize=1&fields=files(id)")); eq(mock.files.size(),before); ok(mock.driveChecks>0);
+            });
+            test("Drive readiness reports disabled API without claiming a usable connection",()-> {
+                mock.driveCheckStatus=403; try { auth.verifyDriveAccess(mock.base.resolve("drive-check")); throw new AssertionError("Disabled Drive must fail"); } catch(IOException ex) { ok(ex.getMessage().contains("habilitar Google Drive API")); } finally { mock.driveCheckStatus=200; } ok(auth.connected());
+            });
+            test("Drive readiness refreshes an expired access token once",()-> { mock.driveCheck401Once=true; int before=mock.driveChecks; auth.verifyDriveAccess(mock.base.resolve("drive-check")); eq(mock.driveChecks,before+2); eq(auth.accessToken(false),"access-refreshed"); });
+            test("Drive readiness rejects an incomplete successful HTTP response",()-> { mock.driveBadCheck=true; try { fails(()->auth.verifyDriveAccess(mock.base.resolve("drive-check"))); } finally { mock.driveBadCheck=false; } });
+            test("Importing an author identity cannot retain user tokens",()-> { Path clean=dir("oauth/clean"),input=clean.resolve("publisher.json"); var value=new LinkedHashMap<>(desktopClient("clean")); value.put("refresh_token","DO_NOT_COPY"); FilesEx.json(input,value); GoogleAuth configured=new GoogleAuth(clean,mock.base.resolve("token")); configured.importClient(input); ok(!Files.readString(clean.resolve("google-client.json")).contains("DO_NOT_COPY")); ok(!configured.connected()); });
         }
     }
     static Map<String,Object> desktopClient(String id) { return Map.of("installed",Map.of("client_id",id+".apps.googleusercontent.com","client_secret","public-desktop-test")); }
@@ -365,7 +374,7 @@ public final class SelfTest {
     static final class MockDrive implements AutoCloseable {
         final HttpServer server; final URI base; final Map<String,Map<String,Object>> files=new LinkedHashMap<>(), drafts=new LinkedHashMap<>();
         final Map<String,ByteArrayOutputStream> data=new HashMap<>(); int generated,queriedStatus;
-        boolean expireStatusOnce,failUploadOnce,ignoreRange,badRange,corruptDownload,unauthorizedOnce,evilLocation,invalidGrant; long failDownloadAt=-1; String challenge="";
+        boolean expireStatusOnce,failUploadOnce,ignoreRange,badRange,corruptDownload,unauthorizedOnce,evilLocation,invalidGrant,driveCheck401Once,driveBadCheck; int driveCheckStatus=200,driveChecks; long failDownloadAt=-1; String challenge="";
         MockDrive() throws IOException { server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0); base=URI.create("http://127.0.0.1:"+server.getAddress().getPort()+"/"); server.createContext("/",this::handle); server.start(); }
         long uploadedBytes() { return data.values().stream().mapToLong(ByteArrayOutputStream::size).sum(); }
         void send(HttpExchange ex,int code,Object value) throws IOException { byte[] b=Json.encode(value).getBytes(StandardCharsets.UTF_8); ex.getResponseHeaders().set("Content-Type","application/json"); ex.sendResponseHeaders(code,b.length); ex.getResponseBody().write(b); }
@@ -379,6 +388,12 @@ public final class SelfTest {
                         String actual=Base64.getUrlEncoder().withoutPadding().encodeToString(FilesEx.digest("SHA-256").digest(form.get("code_verifier").getBytes(StandardCharsets.US_ASCII))); eq(actual,challenge);
                         send(ex,200,Map.of("access_token","access-initial","refresh_token","refresh-test","expires_in",3600));
                     } else { eq(form.get("refresh_token"),"refresh-test"); send(ex,200,Map.of("access_token","access-refreshed","expires_in",3600)); } return;
+                }
+                if(path.equals("/drive-check")) {
+                    driveChecks++; eq(method,"GET"); ok(Set.of("Bearer access-initial","Bearer access-refreshed").contains(ex.getRequestHeaders().getFirst("Authorization")));
+                    if(driveCheck401Once) { driveCheck401Once=false; send(ex,401,Map.of("error","expired")); return; }
+                    if(driveCheckStatus!=200) { send(ex,driveCheckStatus,Map.of("error",Map.of("errors",List.of(Map.of("reason","accessNotConfigured"))))); return; }
+                    send(ex,200,driveBadCheck?Map.of("unexpected",true):Map.of("files",List.of())); return;
                 }
                 eq(ex.getRequestHeaders().getFirst("Authorization"),"Bearer test-access");
                 if(unauthorizedOnce) { unauthorizedOnce=false; send(ex,401,Map.of("error","unauthorized")); return; }

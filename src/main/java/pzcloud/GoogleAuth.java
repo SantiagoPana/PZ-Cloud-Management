@@ -58,14 +58,14 @@ public final class GoogleAuth {
         if(!document.containsKey("installed")) throw new IOException("Esta edición todavía no incluye la conexión de Google del autor.");
         Map<String,Object> client=Json.object(document.get("installed"));
         String id=Json.str(client,"client_id");
-        if(id.isBlank()||id.length()>256||!id.endsWith(".apps.googleusercontent.com")) throw new IOException("La conexión de Google de la app no es válida.");
+        if(id.isBlank()||id.length()>256||!id.endsWith(".apps.googleusercontent.com")||Json.str(client,"client_secret").length()>4096) throw new IOException("La conexión de Google de la app no es válida.");
         return client;
     }
     public synchronized void importClient(Path input) throws IOException {
         if(isConnecting()) throw new IOException("Terminá o cancelá la conexión en curso antes de cambiar la configuración.");
         var document=GoogleClientDefaults.read(input); var client=validateClient(document);
         if(connected()&&!Json.str(token,"client_id").equals(Json.str(client,"client_id"))) throw new IOException("Desconectá la cuenta antes de cambiar el cliente OAuth.");
-        FilesEx.json(clientFile,document);
+        FilesEx.json(clientFile,Map.of("installed",Map.of("client_id",Json.str(client,"client_id"),"client_secret",Json.str(client,"client_secret"))));
     }
     /** Returns false only after the session has reached its final, non-cancellable commit. */
     public boolean cancelConnection() {
@@ -127,6 +127,30 @@ public final class GoogleAuth {
         if(!Json.str(client,"client_id").equals(Json.str(token,"client_id"))) throw new IOException("La conexión de Google de la app cambió. Volvé a iniciar sesión.");
         Map<String,Object> refreshed=tokenRequest(Map.of("client_id",Json.str(client,"client_id"),"client_secret",Json.str(client,"client_secret"),"refresh_token",Json.str(token,"refresh_token"),"grant_type","refresh_token"));
         refreshed.putIfAbsent("refresh_token",token.get("refresh_token")); saveToken(refreshed,Json.str(client,"client_id")); return Json.str(token,"access_token");
+    }
+    /** Read-only check of the actual Drive permission; never uploads a test file. */
+    public void verifyDriveAccess() throws IOException {
+        verifyDriveAccess(URI.create("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&pageSize=1&fields=files(id)"));
+    }
+    void verifyDriveAccess(URI endpoint) throws IOException {
+        for(int attempt=0;attempt<2;attempt++) {
+            HttpRequest request=HttpRequest.newBuilder(endpoint).timeout(Duration.ofSeconds(20)).header("Authorization","Bearer "+accessToken(attempt==1)).GET().build();
+            CompletableFuture<HttpResponse<byte[]>> pending=http().sendAsync(request,HttpResponse.BodyHandlers.ofByteArray());
+            try {
+                HttpResponse<byte[]> response=pending.get(20,TimeUnit.SECONDS); byte[] bytes=response.body();
+                if(bytes.length>65536) throw new IOException("Google Drive devolvió una respuesta inválida.");
+                if(response.statusCode()==401&&attempt==0) continue;
+                if(response.statusCode()==200) { Json.array(Json.object(Json.parse(new String(bytes,StandardCharsets.UTF_8))).get("files")); return; }
+                String reason=new String(bytes,StandardCharsets.UTF_8);
+                if(response.statusCode()==403&&(reason.contains("accessNotConfigured")||reason.contains("SERVICE_DISABLED"))) throw new IOException("Tu sesión de Google está guardada, pero el autor debe habilitar Google Drive API en el proyecto de PZ Cloud.");
+                if(response.statusCode()==403) throw new IOException("Google no autorizó el acceso a tus respaldos. Volvé a autorizar Drive con Elegir otra cuenta. Si sigue fallando, revisá los usuarios de prueba del proyecto.");
+                if(response.statusCode()==401) throw new IOException("Google necesita que vuelvas a iniciar sesión. Elegí otra cuenta para autorizar de nuevo.");
+                throw new IOException("No se pudo comprobar Google Drive (HTTP "+response.statusCode()+"). La sesión está guardada; podés reintentar.");
+            } catch(TimeoutException ex) { throw new IOException("Google Drive tardó demasiado. La sesión está guardada; podés reintentar.",ex); }
+            catch(ExecutionException ex) { throw new IOException("No se pudo acceder a Google Drive. Revisá tu conexión a Internet y reintentá.",ex.getCause()); }
+            catch(InterruptedException ex) { Thread.currentThread().interrupt(); throw new IOException("Comprobación de Google Drive cancelada.",ex); }
+            finally { if(!pending.isDone()) pending.cancel(true); }
+        }
     }
     private synchronized void saveToken(Map<String,Object> response,String clientId) throws IOException {
         if(Json.str(response,"access_token").isBlank()) throw new IOException("Google devolvió una respuesta incompleta.");

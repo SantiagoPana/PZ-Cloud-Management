@@ -11,6 +11,14 @@ Esta configuración la hace el autor de PZ Cloud. Los usuarios finales solo debe
 
 Google requiere una identidad OAuth registrada; un botón o una ventana no pueden reemplazarla. La app ya implementa el flujo de escritorio y no necesita pedir a cada usuario que cree su propio proyecto.
 
+## Probar desde el gestor
+
+En **Iniciar sesión con Google → Habilitar Google (autor)** se abre el asistente de configuración. **Abrir Google Cloud** lleva a la consola y **Cargar JSON de la aplicación** permite importar el cliente de escritorio descargado. Tras cargarlo, la ventana de ingreso comienza la autorización normal. Los clientes de tipo Web se rechazan y un error de importación permite corregir el archivo sin reiniciar.
+
+Después de recibir la sesión, la app realiza una consulta de lectura al espacio privado `appDataFolder`. Si la API de Drive está deshabilitada o el permiso falla, conserva la sesión pero muestra el problema en vez de anunciar una conexión lista. No sube archivos de prueba ni consulta tu perfil o tu correo.
+
+La importación configura esa PC para las pruebas del autor. Para que el resto de usuarios solo inicie sesión, generá el portable con ese mismo cliente siguiendo los pasos de compilación de abajo.
+
 ## Generar el portable configurado
 
 ```powershell

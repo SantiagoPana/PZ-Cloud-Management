@@ -4,7 +4,7 @@
 
 `bash scripts/test.sh` o `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test.ps1`.
 
-78 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
+83 pruebas de integración con mundos ficticios, temporales y un servidor HTTP loopback que reproduce OAuth/Drive. Cubren:
 
 - JSON, Unicode, enteros grandes, nombres portables, traversal y rutas duplicadas.
 - Binarios, directorios vacíos, manifiesto, SHA-256, CRC y contenido corrupto con CRC recompuesto.
@@ -42,3 +42,9 @@ Estas pruebas reales todavía no se han ejecutado en este entorno. El simulador 
 Las pruebas incluyen configuración del autor sin importación por usuario, conservación del cliente de una sesión, cancelación y limpieza del callback, intento único, vencimiento/reintento, commit final y recuperación tras una sesión ilegible. El publicador verifica que la identidad de app no incorpore tokens del usuario y que una compilación sin cliente no afirme estar lista.
 
 `pzcloud.SignInUiSmoke` abre la ventana nativa y un simulador OAuth local, comprueba retorno automático y sesión recordada, reutilización sin otro login, cancelación, falta de configuración y ausencia de campos para usuario/contraseña dentro de la app. Genera `build/ui-google-sign-in.png` y `build/ui-google-not-configured.png`. Estas pruebas no registran una app ni conectan una cuenta real.
+
+## Pulido y comprobación de la 2.2
+
+La suite verifica la consulta de permisos de Drive sin subir archivos, renovación tras un 401, error de API deshabilitada, respuestas incompletas y separación de tokens al importar la identidad. La prueba gráfica comprueba que una sesión sin acceso a Drive no cierre el diálogo como lista, y que el asistente rechace un cliente Web y acepte un cliente de escritorio corregido. Produce también `build/ui-google-setup.png`.
+
+El flujo principal comprueba la búsqueda desde el catálogo cargado y desactiva Guardar/Jugar al no haber coincidencias. Luego guarda y restaura la partida elegida, conservando los archivos originales. Las comprobaciones de red y OAuth de estas suites usan exclusivamente el simulador local.

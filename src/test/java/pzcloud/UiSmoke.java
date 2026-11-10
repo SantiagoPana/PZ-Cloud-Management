@@ -53,6 +53,7 @@ public final class UiSmoke {
             SwingUtilities.invokeLater(()->button("Configuración").doClick()); JDialog config=dialog();
             SwingUtilities.invokeAndWait(()-> { var radio=find(config,JRadioButton.class,b->b.getText().equals("Solo en esta PC")); if(radio==null) throw new AssertionError("No simple local option"); radio.setSelected(true); }); accept(config); drain(worker);
             if(!c.get("cloudMode").equals("none")) throw new AssertionError("Configuration was not applied");
+            SwingUtilities.invokeAndWait(()-> { var search=find(window,JTextField.class,t->true); search.setText("No existe esta partida"); if(button("Guardar partida").isEnabled()||button("Jugar").isEnabled()) throw new AssertionError("Empty search must disable actions for missing worlds"); search.setText("Riverside"); if(!button("Guardar partida").isEnabled()) throw new AssertionError("Search should select the matching world"); search.setText(""); });
             int before=manager.history(null).size(); SwingUtilities.invokeAndWait(()->button("Guardar partida").doClick()); drain(worker);
             if(manager.history(null).size()!=before+1) throw new AssertionError("Save button did not create a verified backup");
             Path mainImage=Path.of(args.length>0?args[0]:"build/ui-smoke.png"); image(mainImage);
@@ -61,9 +62,9 @@ public final class UiSmoke {
             SwingUtilities.invokeAndWait(()->find(restore,JTextField.class,t->true).setText("Recuperada desde interfaz")); accept(restore);
             // The success notice is modal; acknowledge it before draining the EDT.
             JDialog done=dialog(); accept(done); drain(worker);
-            Path recovered=c.saves().resolve("Apocalypse/Recuperada desde interfaz/map_ver.bin");
-            if(!Files.exists(recovered)||!Files.readString(recovered).equals("42.22.1")) throw new AssertionError("Recovery button did not install the selected world");
-            System.out.println("UI smoke passed: setup, save and restore clicks; original progress retained");
+            Path recovered=c.saves().resolve("Sandbox/Recuperada desde interfaz/players.db");
+            if(!Files.exists(recovered)||!Files.readString(recovered).equals("fixture")) throw new AssertionError("Recovery button did not install the selected world");
+            System.out.println("UI smoke passed: setup, cached search, empty-selection actions, save and restore; original progress retained");
         } finally { if(window!=null) SwingUtilities.invokeAndWait(window::close); else worker.shutdownNow(); FilesEx.deleteTree(temp); }
         System.exit(0);
     }
