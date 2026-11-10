@@ -258,9 +258,15 @@ public final class ManagerWindow extends JFrame implements AutoCloseable {
         if(busy) return; busy=true; buttons.forEach(b->b.setEnabled(false)); automatic.setEnabled(false); source.setEnabled(false); progress.setVisible(true); progress.setIndeterminate(true); log(label);
         worker.execute(()-> { T result=null; Exception error=null; try { result=action.run(); } catch(Exception ex) { error=ex; } T value=result; Exception failure=error;
             SwingUtilities.invokeLater(()-> { busy=false; buttons.forEach(b->b.setEnabled(true)); automatic.setEnabled(worlds.getSelectedValue()!=null); source.setEnabled(true); progress.setIndeterminate(false); progress.setVisible(false); updateConnection();
+                if(exitAfterCurrent) {
+                    // A requested close takes precedence over follow-up dialogs or setup screens.
+                    if(failure!=null) log(I18n.t("No se completó: ")+failure.getMessage());
+                    exitAfterCurrent=false;
+                    exit();
+                    return;
+                }
                 if(failure!=null) { log(I18n.t("No se completó: ")+failure.getMessage()); JOptionPane.showMessageDialog(this,failure.getMessage(),I18n.t("No se completó la operación"),JOptionPane.ERROR_MESSAGE); }
                 else { status.setText(I18n.t("Listo")); success.accept(value); } updateActions();
-                if(exitAfterCurrent) { exitAfterCurrent=false; exit(); }
             });
         });
     }
