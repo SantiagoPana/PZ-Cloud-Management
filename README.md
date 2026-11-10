@@ -14,7 +14,7 @@ Las herramientas de compilación y su configuración son para el desarrollador y
 
 ## Empezar
 
-La compilación en preparación es **Knox Net 2.3.2**. Descargá el artefacto **KnoxNet-2.3.2-Windows-Google** del último workflow correcto de [Actions](https://github.com/SantiagoPana/PZ-Cloud-Management/actions), extraé toda la carpeta y abrí **KnoxNet.exe**. Java y la conexión de Google vienen incluidos.
+**[Descargar Knox Net 2.3.2 para Windows — Google incluido](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/download/v2.3.2/KnoxNet-2.3.2-Windows-Google.zip)**. Extraé toda la carpeta y abrí **KnoxNet.exe**. Java y la identidad de aplicación de Google vienen incluidos. [Notas de la versión y checksums](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.2).
 
 La [release publicada anterior, PZ Cloud 2.3.1](https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.1), conserva su nombre y ejecutable originales.
 
@@ -55,7 +55,7 @@ Son mediciones de este entorno, no un límite de RAM ni una promesa para cada PC
 
 ## Compatibilidad y estado
 
-**2.3.2 preliminar**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
+**2.3.2 (prerelease publicado)**. Conserva las partidas, las copias schema 1, identidades y preferencias de la 1.0. Si ya había una conexión directa con Google, se reutiliza. Las copias anteriores se indexan una sola vez y luego se consulta su resumen pequeño.
 
 88 pruebas automáticas con mundos ficticios y simulador HTTP local, más pruebas gráficas de configurar/guardar/recuperar y de la ventana de inicio de sesión con un simulador local. Ninguna prueba automatizada conecta una cuenta real. Sigue pendiente probar la conexión con una cuenta real y cargar un mundo restaurado en B42.22.1.
 
