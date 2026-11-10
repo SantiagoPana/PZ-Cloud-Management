@@ -164,6 +164,23 @@ test('Malformed IDs and duplicates are ignored; catalog is bounded', function()
     check(#panel.list.items<=500)
     local seen={}; for _,row in ipairs(panel.list.items) do check(not seen[row.item.fileId]); seen[row.item.fileId]=true end
 end)
+test('Menu button is centered near the top with comfortable margins across resolutions', function()
+    for _,size in ipairs({{800,600},{1024,768},{1920,1080},{2560,1440},{3840,2160}}) do
+        local e=setup('AR',size[1],size[2])
+        Events.OnMainMenuEnter.fire()
+        local button=PZCloud.button
+        check(button~=nil,'menu button is missing')
+        eq(button.x,math.floor((size[1]-button.width)/2))
+        eq(button.y,math.max(20,math.min(42,math.floor(size[2]*0.04))))
+        check(button.y>0 and button.y+button.height<size[2]/4,'menu button should stay near top')
+        -- The same anchor must survive a resize without creating another button.
+        e.width=1366; e.height=768
+        Events.OnResolutionChange.fire()
+        eq(PZCloud.button,button)
+        eq(button.x,math.floor((1366-button.width)/2))
+        eq(button.y,30)
+    end
+end)
 test('Resolution changes rebuild the window; gameplay removes menu UI', function()
     local e=setup('AR'); local panel=e:open(); local nonce=PZCloud.pending.nonce
     e.width=1024; e.height=768; Events.OnResolutionChange.fire(); check(PZCloud.panel~=panel); eq(PZCloud.pending.nonce,nonce)
