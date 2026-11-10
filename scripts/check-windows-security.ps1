@@ -48,7 +48,7 @@ if ((Get-Command Get-MpComputerStatus -ErrorAction SilentlyContinue) -and (Get-C
 }
 $report = [ordered]@{
     application = 'Knox Net'
-    version = '2.3.2'
+    version = '2.3.4'
     exeSha256 = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
     jarSha256 = (Get-FileHash -LiteralPath $jar -Algorithm SHA256).Hash.ToLowerInvariant()
     authenticode = [string]$signature.Status

@@ -1,6 +1,6 @@
-# Probar la 2.3.1 en Windows
+# Probar la 2.3.4 en Windows
 
-1. Descargá `PZCloudManagement-2.3.1-Windows-Google` de un workflow correcto de Actions y extraelo completo.
+1. Descargá `KnoxNet-2.3.4-Windows-Google` de un workflow correcto de Actions y extraelo completo.
 2. Abrí **KnoxNet.exe**. No hace falta instalar Java.
 3. Elegí **Solo en esta PC** para la primera prueba. Seleccioná una partida descartable y cerrá Zomboid.
 4. **Guardar partida** debe crear una copia. En **Recuperar partida → En esta PC**, elegila y recuperala con un nombre nuevo.

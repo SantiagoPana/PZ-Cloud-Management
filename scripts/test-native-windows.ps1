@@ -19,7 +19,7 @@ $taskProcess = Start-Process -FilePath (Join-Path $taskCopy 'KnoxNet.exe') -Argu
 if (-not $taskProcess.WaitForExit(45000)) { $taskProcess.Kill(); throw 'Native portable did not finish the installation check.' }
 if (-not (Test-Path -LiteralPath $taskOutput)) { throw 'Native portable did not create its diagnostic report.' }
 $taskCheck = Get-Content -LiteralPath $taskOutput -Raw | ConvertFrom-Json
-if ($taskCheck.applicationName -ne 'Knox Net' -or $taskCheck.description -ne 'PZ Cloud Management' -or $taskCheck.version -ne '2.3.2') { throw 'The packaged app has incorrect branding or version.' }
+if ($taskCheck.applicationName -ne 'Knox Net' -or $taskCheck.description -ne 'PZ Cloud Management' -or $taskCheck.version -ne '2.3.4') { throw 'The packaged app has incorrect branding or version.' }
 if (-not $taskCheck.googleIncluded -or $taskCheck.freshCloudMode -ne 'drive' -or $taskCheck.personalSessionCreated) { throw 'Native Windows portable could not read its bundled Google fixture.' }
 if ((Get-FileHash -LiteralPath (Join-Path $taskApp 'app/PZCloudManagement.jar') -Algorithm SHA256).Hash -ne $taskOriginalHash) { throw 'The native test modified the distributable app.' }
 $taskStatusPath = Join-Path $taskApp 'GOOGLE_AUTH_STATUS.json'

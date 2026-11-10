@@ -3,11 +3,11 @@ id=
 title=Knox Net - PZ Cloud Management [B42]
 description=[h1]Knox Net[/h1]
 description=PZ Cloud Management. Tus partidas, a salvo.
-description=Consultá y descargá tus copias de Google Drive desde el menú principal de Project Zomboid. Español e inglés. Abrí la ventana con el botón Knox Net o con F8.
+description=Consultá y descargá tus copias de Google Drive desde el menú principal de Project Zomboid. Español e inglés. Botón Knox Net arriba y centrado en el menú principal; abrí la ventana con un clic o con F8.
 description=
 description=[h2]Requiere la aplicación de escritorio gratuita[/h2]
-description=Este mod NO funciona como cliente de nube independiente. Instalá Knox Net 2.3.2 para Windows (también es compatible con PZ Cloud 2.3.1), abrilo e iniciá sesión con Google. La aplicación debe seguir abierta en la misma PC mientras usás este menú.
-description=[url=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/]Descargar la aplicación para Windows: Google y Java incluidos[/url]
+description=Este mod NO funciona como cliente de nube independiente. Instalá Knox Net 2.3.4 para Windows (también es compatible con PZ Cloud 2.3.1), abrilo e iniciá sesión con Google. La aplicación debe seguir abierta en la misma PC mientras usás este menú.
+description=[url=https://github.com/SantiagoPana/PZ-Cloud-Management/releases/tag/v2.3.4]Descargar Knox Net 2.3.4 para Windows (Google y Java incluidos)[/url]
 description=
 description=[h2]Cómo usarlo[/h2]
 description=1. Suscribite y activá Knox Net (ID: KNManagement) en Mods. Reiniciá el juego para cargar las traducciones.
@@ -19,6 +19,6 @@ description=[h2]Compatibilidad[/h2]
 description=Build 42.15+; objetivo de prueba B42.22.1. Solo partidas de un jugador. Usá las mismas builds y mods en ambas PC. Este menú no modifica partidas abiertas ni restaura mientras jugás. No necesita instalarse en servidores.
 description=La app también funciona sin el mod de Workshop. El mod solo agrega acceso desde el menú del juego. No pide archivos JSON ni credenciales de desarrollador.
 description=
-description=Integración 2.3.2 preliminar. Requiere validación visual final dentro de B42.22.1. No es una herramienta oficial de The Indie Stone.
+description=Integración 2.3.4 preliminar. Requiere validación visual final dentro de B42.22.1. No es una herramienta oficial de The Indie Stone.
 tags=Build 42;Interface;Utility
 visibility=public

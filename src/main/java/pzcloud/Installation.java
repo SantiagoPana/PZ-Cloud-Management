@@ -8,7 +8,7 @@ import java.util.*;
 final class Installation {
     static final String NAME="Knox Net";
     static final String DESCRIPTION="PZ Cloud Management";
-    static final String VERSION="2.3.2";
+    static final String VERSION="2.3.4";
     private Installation() {}
     static Path location() throws IOException {
         try { return Path.of(Installation.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toAbsolutePath().normalize(); }

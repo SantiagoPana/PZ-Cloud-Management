@@ -2,7 +2,7 @@
 
 - Nombre visible: **Knox Net**.
 - Descripción: **PZ Cloud Management**.
-- Versión preparada: **2.3.2**, aplicación e integración del juego.
+- Versión preparada: **2.3.4**, aplicación e integración del juego.
 - Portable de Windows: `KnoxNet.exe`, dentro de la carpeta `KnoxNet`.
 - Mod: nombre `Knox Net`, ID `KNManagement`, autor `47`.
 - Workshop: `Knox Net - PZ Cloud Management [B42]`.
@@ -19,6 +19,6 @@ El ID `KNManagement` conserva la elección del autor en `mod.info`. Si antes usa
 
 ## Distribución preparada
 
-GitHub Actions genera `KnoxNet-2.3.2-Windows-Google` cuando el cliente de Google del autor está incluido, y `KnoxNet-Workshop-2.3.2` para el mod. Las ediciones sin conexión incluida se identifican como `Preview-local-only`.
+GitHub Actions genera `KnoxNet-2.3.4-Windows-Google` cuando el cliente de Google del autor está incluido, y `KnoxNet-Workshop-2.3.4` para el mod. Las ediciones sin conexión incluida se identifican como `Preview-local-only`.
 
-La release publicada `v2.3.1` conserva su contenido original. Este cambio prepara los nuevos paquetes en `development`; publicar una release nueva y cargar el artículo de Workshop son pasos separados. El mod abre la página de releases existente, que permite acceder a las versiones publicadas sin incluir un enlace a una release todavía inexistente.
+La release `v2.3.4` distribuye el ejecutable nuevo y un ZIP de Workshop listo para cargar desde el juego. Las releases `v2.3.1` y `v2.3.2` no se modifican. Publicar el ZIP en GitHub no publica automáticamente el artículo en Steam Workshop: ese paso requiere la sesión del autor en Steam.
