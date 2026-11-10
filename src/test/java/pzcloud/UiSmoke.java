@@ -49,6 +49,18 @@ public final class UiSmoke {
         ScheduledExecutorService worker=Executors.newSingleThreadScheduledExecutor();
         try {
             SwingUtilities.invokeAndWait(()-> { try { window=new ManagerWindow(manager,worker); window.setVisible(true); } catch(Exception ex) { throw new RuntimeException(ex); } }); drain(worker);
+            // Explicit minimize action must work with or without an OS tray; it must never strand the UI.
+            SwingUtilities.invokeAndWait(()-> {
+                JButton minimize=button("Minimizar a la bandeja");
+                if(minimize==null||!minimize.isEnabled()) throw new AssertionError("Accessible minimize-to-tray button missing");
+                minimize.doClick();
+                if(window.trayAvailable()&&window.isVisible()) throw new AssertionError("Window was not hidden in the system tray");
+                if(!window.trayAvailable()&&!window.isVisible()) throw new AssertionError("Missing tray left the app inaccessible");
+            });
+            window.showApp();
+            SwingUtilities.invokeAndWait(()-> {
+                if(!window.isVisible()||window.getState()!=Frame.NORMAL) throw new AssertionError("Window failed to return from the tray");
+            });
             // Native dialog is interacted with through Swing, using the same actions as a user.
             SwingUtilities.invokeLater(()->button("Configuración").doClick()); JDialog config=dialog();
             SwingUtilities.invokeAndWait(()-> { var radio=find(config,JRadioButton.class,b->b.getText().equals("Solo en esta PC")); if(radio==null) throw new AssertionError("No simple local option"); radio.setSelected(true); });
@@ -66,7 +78,7 @@ public final class UiSmoke {
             JDialog done=dialog(); accept(done); drain(worker);
             Path recovered=c.saves().resolve("Sandbox/Recuperada desde interfaz/players.db");
             if(!Files.exists(recovered)||!Files.readString(recovered).equals("fixture")) throw new AssertionError("Recovery button did not install the selected world");
-            System.out.println("UI smoke passed: setup, cached search, empty-selection actions, save and restore; original progress retained");
+            System.out.println("UI smoke passed: minimize/restore from tray, setup, cached search, empty-selection actions, save and restore; original progress retained");
         } finally { if(window!=null) SwingUtilities.invokeAndWait(window::close); else worker.shutdownNow(); FilesEx.deleteTree(temp); }
         System.exit(0);
     }
