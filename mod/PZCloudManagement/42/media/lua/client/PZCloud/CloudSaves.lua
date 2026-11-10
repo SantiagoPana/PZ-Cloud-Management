@@ -259,8 +259,12 @@ local function openPanel()
 end
 local function positionButton()
     if PZCloud.button then
-        PZCloud.button:setX(getCore():getScreenWidth() - PZCloud.button.width - 20)
-        PZCloud.button:setY(getCore():getScreenHeight() - PZCloud.button.height - 65)
+        -- Anchor the Workshop shortcut to the upper center with a modest safe margin.
+        -- Clamp the margin so it remains pleasant on both small and 4K screens.
+        local screenWidth, screenHeight = getCore():getScreenWidth(), getCore():getScreenHeight()
+        local topMargin = math.max(20, math.min(42, math.floor(screenHeight * 0.04)))
+        PZCloud.button:setX(math.floor((screenWidth - PZCloud.button.width) / 2))
+        PZCloud.button:setY(topMargin)
     end
     if PZCloud.panel then
         PZCloud.panel:removeFromUIManager(); PZCloud.panel = nil
