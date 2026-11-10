@@ -38,7 +38,7 @@ local function setup(language, width, height, scale)
     function Base:prerender() end
     function Base:drawRect() end
     function Base:drawText(text, x, y, r, g, b, a, font)
-        e.draws[#e.draws + 1] = {text=text,x=x,y=y,font=font}
+        e.draws[#e.draws + 1] = {text=text,x=x,y=y,font=font,source=self}
     end
     function Base:clear() self.items={}; self.selected=0 end
     function Base:addItem(text, item) self.items[#self.items+1] = {text=text,item=item,index=#self.items+1} end
@@ -102,6 +102,16 @@ test('Missing locale falls back to readable English and no raw keys', function()
     local e=setup('missing'); local panel=e:open(); panel:prerender()
     eq(panel.buttons.DOWNLOAD.title,'Download copy')
     for _,draw in ipairs(e.draws) do check(not draw.text:find('UI_PZCloud_')) end
+end)
+test('Empty-state text belongs to the list and is drawn after its background', function()
+    local e=setup('ES'); local panel=e:open(); panel.list:prerender()
+    local found=false
+    for _,draw in ipairs(e.draws) do
+        if draw.text=='Todavía no hay copias para mostrar' then
+            eq(draw.source,panel.list); check(draw.y>=0 and draw.y<panel.list.height); found=true
+        end
+    end
+    check(found,'empty state was not drawn in the list')
 end)
 test('Timeout stops polling and marks cached list unavailable for downloads', function()
     local e=setup('ES'); e.files['pzcloud-catalog.txt']=catalog; local panel=e:open()

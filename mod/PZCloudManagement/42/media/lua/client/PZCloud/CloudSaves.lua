@@ -191,14 +191,6 @@ function CloudPanel:prerender()
     self:drawText(self.countText, 20, self.list.y - self.lineHeight - 7, 0.7, 0.76, 0.7, 1, UIFont.Small)
     self:drawLines(self.hintLines, self.hintY, 0.8, 0.84, 0.8)
     self:drawLines(self.statusLines, self.statusY, self.statusError and 1 or 0.7, self.statusError and 0.65 or 0.86, 0.55)
-    if #self.list.items == 0 then
-        local y = self.list.y + 25
-        self:drawText(tr("Empty"), 32, y, 0.9, 0.93, 0.9, 1, UIFont.Medium)
-        for _, line in ipairs(self.emptyHintLines) do
-            y = y + self.lineHeight
-            self:drawText(line, 32, y + 14, 0.7, 0.76, 0.7, 1, UIFont.Small)
-        end
-    end
 end
 function CloudPanel:createChildren()
     ISPanel.createChildren(self)
@@ -226,6 +218,19 @@ function CloudPanel:createChildren()
     self.list = ISScrollingListBox:new(20, listY, self.width - 40, self.hintY - listY - 16)
     self.list:initialise(); self.list:instantiate()
     self.list.itemheight = getTextManager():getFontHeight(UIFont.Medium) + self.lineHeight + 20
+    -- Draw inside the list after its background, so the empty-state text stays visible.
+    self.list.prerender = function(list)
+        ISScrollingListBox.prerender(list)
+        if #list.items == 0 then
+            local y = 20
+            list:drawText(tr("Empty"), 12, y, 0.9, 0.93, 0.9, 1, UIFont.Medium)
+            y = y + getTextManager():getFontHeight(UIFont.Medium) + 8
+            for _, line in ipairs(self.emptyHintLines) do
+                list:drawText(line, 12, y, 0.7, 0.76, 0.7, 1, UIFont.Small)
+                y = y + self.lineHeight
+            end
+        end
+    end
     self.list.doDrawItem = function(list, y, item, alt)
         if list.selected == item.index then list:drawRect(0, y, list.width, list.itemheight, 0.5, 0.3, 0.45, 0.25)
         elseif alt then list:drawRect(0, y, list.width, list.itemheight, 0.15, 0.25, 0.3, 0.25) end
