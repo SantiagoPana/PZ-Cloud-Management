@@ -16,7 +16,7 @@ public final class WorkshopInstallSmoke {
             Files.writeString(translations.resolve("EN/UI_EN.txt"),"obsolete"); Files.writeString(translations.resolve("ES/UI_ES.txt"),"obsolete");
             Files.writeString(translations.resolve("ES/custom.txt"),"keep custom file");
             new GameBridge(manager,()->{},s->{}).installMod();
-            for(String file:List.of("42/mod.info","42/poster.png","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI.json","42/media/lua/shared/Translate/ES/UI.json","42/media/lua/shared/Translate/AR/UI.json")) {
+            for(String file:List.of("42/mod.info","42/poster.png","42/cloud.png","42/media/lua/client/PZCloud/CloudSaves.lua","42/media/lua/shared/Translate/EN/UI.json","42/media/lua/shared/Translate/ES/UI.json","42/media/lua/shared/Translate/AR/UI.json")) {
                 try(var source=WorkshopInstallSmoke.class.getResourceAsStream("/mod/PZCloudManagement/"+file)) {
                     if(source==null||!Arrays.equals(source.readAllBytes(),Files.readAllBytes(mod.resolve(file)))) throw new AssertionError("Missing/changed installed resource: "+file);
                 }
